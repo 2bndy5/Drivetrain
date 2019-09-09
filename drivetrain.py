@@ -3,8 +3,8 @@ This module contains the necessary algorithms for utilizing different DC motor t
 """
 from gpiozero import AngularServo #, PhaseEnableMotor, Motor, PinPWMUnsupported
 import time
-from motors.stepper_motor import Stepper
-from motors.motor import BiMotor, PhasedMotor
+from .motors.stepper_motor import Stepper
+from .motors.motor import BiMotor, PhasedMotor
 
 class dummyMotor:
     def __init__(self, value=0):
