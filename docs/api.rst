@@ -7,5 +7,5 @@
 .. automodule:: drivetrain
     :members:
 
-.. automodule:: motor
+.. automodule:: drivetrain.motor
     :members:
