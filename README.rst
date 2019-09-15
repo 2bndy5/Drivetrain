@@ -5,7 +5,7 @@
 Introduction
 ============
 
-Yet another GPS NMEA sentence parser, but this time with the threading module for expediting data parsing in background running threads. This was developed for & tested on the Raspberry PI.
+A collection of motor drivers classes and a special drivetrain class to coordinate the motors objects in generic configurations. This takes advatage of the threading module for smoothing motor input commands in background running threads. This was developed for & tested on the Raspberry PI.
 
 Dependencies
 ============
