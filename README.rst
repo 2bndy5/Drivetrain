@@ -12,6 +12,8 @@ Dependencies
 
 This library requires the `digitalio` and `pulseio` modules from the `adafruit-blinka Library <https://pypi.org/project/Adafruit-Blinka/>`_
 
+The stepper motor driver class was originally built atop the gpiozero base classes, and is due for an upgrade to depend on circuitpython's board and digitalio modules. All this means the library is still a work in progress, and `gpiozero library <https://pypi.org/project/gpiozero/>`_ is also currently required (will get dropped soon).
+
 Installation
 ============
 
