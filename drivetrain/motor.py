@@ -1,5 +1,8 @@
 """
-A collection of driver classes for different single phase DC motors implementing the threaded module. Includes Solonoid (parent base class), BiMotor & PhasedMotor (children of Solonoid)
+motor
+======
+
+A collection of driver classes for different single phase DC motors implementing the threading module. Includes Solonoid (parent base class), BiMotor & PhasedMotor (children of Solonoid)
 """
 import math
 from threading import Thread

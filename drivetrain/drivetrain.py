@@ -1,12 +1,15 @@
 """
+drivetrain
+===========
+
 This module contains the necessary algorithms for utilizing different DC motor types in different configurations for the raspberry pi. Currently only supporting the R2D2 (AKA BiPed) & typical openRC (AKA QuadPed) configurations.
 """
 # pylint: disable=arguments-differ,invalid-name
 
 import time
 from gpiozero import AngularServo
-from .motors.gpio_zero_stepper_motor import Stepper
-from .motors.motor import BiMotor, PhasedMotor
+from gpio_zero_stepper_motor import Stepper
+from motor import BiMotor, PhasedMotor
 
 
 class Drivetrain:

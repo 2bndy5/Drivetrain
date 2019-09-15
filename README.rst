@@ -5,7 +5,7 @@
 Introduction
 ============
 
-Yet another GPS NMEA sentence parser, but this time with the threaded module for expediting data parsing in background running threads. This was developed for & tested on the Raspberry PI.
+Yet another GPS NMEA sentence parser, but this time with the threading module for expediting data parsing in background running threads. This was developed for & tested on the Raspberry PI.
 
 Dependencies
 ============
