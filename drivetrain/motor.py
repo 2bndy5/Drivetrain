@@ -1,6 +1,7 @@
 """
-motor
-======
+================================
+Solonoid, BiMotor, & PhasedMotor
+================================
 
 A collection of driver classes for different single phase DC motors implementing the threading module. Includes Solonoid (parent base class), BiMotor & PhasedMotor (children of Solonoid)
 """
@@ -32,6 +33,20 @@ class Solonoid:
         self.cancel_thread = False
         # time in milliseconds to change/ramp speed from self.value to self.final_speed
         self._dt = ramp_time
+
+    @property
+    def ramp_time(self):
+        """This attribute is the maximum amount of time (in milliseconds) used to smooth the input values. A negative value will be used as a positive number. Set this to ``0`` to disable all smoothing on the motor input values or just set the `value` atribute directly to bypass the smoothing algorithm.
+
+        .. note:: Since the change in speed is also used to determine how much time will be used to smooth the input, this parameter's value will represent the time it takes for the motor to go from full reverse to full forward and vice versa. If the motor is going from rest to either full reverse or full forward, then the time it takes to do that will be half of this parameter's value.
+
+        """
+        return self._dt
+
+    @ramp_time.setter
+    def ramp_time(self, delta_t):
+        self._dt = abs(delta_t)
+
 
     def _stop_thread(self):
         if self.smoothing_thread is not None:
@@ -107,7 +122,7 @@ class Solonoid:
 class BiMotor(Solonoid):
     """This class is meant be used for motors driver by driver boards that expect 2 PWM outputs. Each pin represent the controlling signal for the motor's speed in a single rotational direction.
 
-    :param list, tuple pins: A list of pins connected to the motor driver. If only one pins is passed than the motor will only turn in one direction.
+    :param list,tuple pins: A list of pins connected to the motor driver. If only one pins is passed than the motor will only turn in one direction.
     :param int ramp_time: The time (in milliseconds) that is used to smooth the motor's input. Default is 500. This time represents the maximum amount of time that the input will be smoothed. Since the change in speed is also used to determine how much time will be used to smooth the input, this parameter's value will represent the time it takes for the motor to go from full reverse to full forward and vice versa. If the motor is going from rest to either full reverse or full forward, then the time it takes to do that will be half of this parameter's value. This can be changed at any time by changing the `ramp_time` attribute
 
     """

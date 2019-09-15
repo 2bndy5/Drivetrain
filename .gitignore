@@ -1,0 +1,10 @@
+__pycache__
+_build
+*.pyc
+.env
+build*
+*.DS_Store
+.eggs
+dist
+**/*.egg-info
+.vscode/settings.json
