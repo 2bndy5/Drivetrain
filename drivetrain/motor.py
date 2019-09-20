@@ -5,11 +5,17 @@ Solonoid, BiMotor, & PhasedMotor
 
 A collection of driver classes for different single phase DC motors implementing the threading module. Includes Solonoid (parent base class), BiMotor & PhasedMotor (children of Solonoid)
 """
-import math
+from math import pi as PI, cos
 from threading import Thread
+import struct
 import time
 import digitalio
 import pulseio
+import serial
+from busio import SPI
+from circuitpython_nrf24l01 import RF24
+
+# pylint: disable=invalid-name,too-many-instance-attributes
 
 class Solonoid:
     """This base class is meant be used as a parent to `BiMotor` and `PhasedMotor` classes of this module, but can be used for solonoids if needed. Solonoids, by nature, cannot be controlled analogously (cannot be any value other than 0 or 100). Despite the fact that this class holds all the smoothing input algorithms for its child classes, the output values are not actually smoothed. With that said, this class can be used to control up to 2 solonoids (see also `value` attribute for more details).
@@ -19,19 +25,19 @@ class Solonoid:
 
     """
     def __init__(self, pins, ramp_time=100):
-        self.signals = []
+        self._signals = []
         for i, pin in enumerate(pins):
             # save pwm duty cycles as int [0,100]; direction signals will be treated like bool [0|1]
-            self.signals.append(digitalio.DigitalInOut(pin))
-            self.signals[i].switch_to_output(False)
+            self._signals.append(digitalio.DigitalInOut(pin))
+            self._signals[i].switch_to_output(False)
         # variables used to track acceleration
-        self.init_speed = 0
-        self.final_speed = 0
-        self.start_smooth = 0
-        self.end_smooth = 0
-        self.smoothing_thread = None
-        self.cancel_thread = False
-        # time in milliseconds to change/ramp speed from self.value to self.final_speed
+        self._init_speed = 0
+        self._final_speed = 0
+        self._start_smooth = 0
+        self._end_smooth = 0
+        self._smoothing_thread = None
+        self._cancel_thread = False
+        # time in milliseconds to change/ramp speed from self.value to self._final_speed
         self._dt = ramp_time
 
     @property
@@ -49,21 +55,21 @@ class Solonoid:
 
 
     def _stop_thread(self):
-        if self.smoothing_thread is not None:
-            self.smoothing_thread.join()
-        self.smoothing_thread = None
+        if self._smoothing_thread is not None:
+            self._smoothing_thread.join()
+        self._smoothing_thread = None
 
     def _smooth(self):
         """
-        delta_speed, self.final_speed, and self.init_speed are all percentage [-1,1]
+        delta_speed, self._final_speed, and self._init_speed are all percentage [-1,1]
         delta_time & dt is in microseconds
         """
-        delta_time = int(time.monotonic() * 1000) - self.start_smooth
-        while delta_time < (self.end_smooth - self.start_smooth) and self.cancel_thread:
-            delta_speed = (1 - math.cos(delta_time / float(self.end_smooth - self.start_smooth) * math.pi)) / 2
-            self.value = (delta_speed * (self.final_speed - self.init_speed) + self.init_speed) / 100.0
-            delta_time = int(time.monotonic() * 1000) - self.start_smooth
-        self.value = self.final_speed / 100.0
+        delta_time = int(time.monotonic() * 1000) - self._start_smooth
+        while delta_time < (self._end_smooth - self._start_smooth) and self._cancel_thread:
+            delta_speed = (1 - cos(delta_time / float(self._end_smooth - self._start_smooth) * PI)) / 2
+            self.value = (delta_speed * (self._final_speed - self._init_speed) + self._init_speed) / 100.0
+            delta_time = int(time.monotonic() * 1000) - self._start_smooth
+        self.value = self._final_speed / 100.0
 
     # let final_speed be the percentual target speed [-1,1]
     def cellerate(self, final_speed):
@@ -71,17 +77,17 @@ class Solonoid:
         let final_speed = target speed in range of [-1,1]
         let delta_t = percent [0,1] of delta time (self._dt in milliseconds)
         """
-        self.final_speed = max(-100, min(100, round(final_speed * 100)))  # bounds check
+        self._final_speed = max(-100, min(100, round(final_speed * 100)))  # bounds check
         # integer of milliseconds
-        self.start_smooth = int(time.monotonic() * 1000)
-        self.init_speed = int(self.value * 100)
-        delta_t = abs((self.final_speed - self.init_speed) / 200.0)
-        self.end_smooth = self.start_smooth + delta_t * self._dt
-        self.cancel_thread = False
+        self._start_smooth = int(time.monotonic() * 1000)
+        self._init_speed = int(self.value * 100)
+        delta_t = abs((self._final_speed - self._init_speed) / 200.0)
+        self._end_smooth = self._start_smooth + delta_t * self._dt
+        self._cancel_thread = False
         self._stop_thread()
-        self.smoothing_thread = Thread(target=self._smooth)
-        self.cancel_thread = True
-        self.smoothing_thread.start()
+        self._smoothing_thread = Thread(target=self._smooth)
+        self._cancel_thread = True
+        self._smoothing_thread.start()
 
     @property
     def value(self):
@@ -90,7 +96,7 @@ class Solonoid:
         .. note:: Because this class is built to handle 2 pins and tailored for solonoids, any negative value will only energize the solonoid attached to the second pin (passed in ``pins`` parameter to the constructor). Any positive value will only energize the solonoid attached to the first pin (passed in ``pins`` parameter to the constructor). Alternatively, a zero value will de-energize both solonoids
 
         """
-        return self.signals[0].duty_cycle or self.signals[1].duty_cycle if len(self.signals) > 1 else self.signals[0].duty_cycle
+        return self._signals[0].duty_cycle or self._signals[1].duty_cycle if len(self._signals) > 1 else self._signals[0].duty_cycle
 
     @value.setter
     def value(self, val):
@@ -98,24 +104,24 @@ class Solonoid:
         val = max(-100, min(100, round(val * 100)))
         # going forward
         if val > 0:
-            self.signals[0] = True
-            if len(self.signals) > 1:
-                self.signals[1] = False
+            self._signals[0] = True
+            if len(self._signals) > 1:
+                self._signals[1] = False
         # going backward
         elif val < 0:
-            self.signals[0] = False
-            if len(self.signals) > 1:
-                self.signals[1] = True
+            self._signals[0] = False
+            if len(self._signals) > 1:
+                self._signals[1] = True
         # otherwise stop
         else:
-            self.signals[0] = False
-            if len(self.signals) > 1:
-                self.signals[1] = False
+            self._signals[0] = False
+            if len(self._signals) > 1:
+                self._signals[1] = False
 
     def __del__(self):
-        self.cancel_thread = False
-        if self.smoothing_thread is not None:
-            del self.smoothing_thread
+        self._cancel_thread = False
+        if self._smoothing_thread is not None:
+            del self._smoothing_thread
 # end Solonoid parent class
 
 
@@ -129,13 +135,13 @@ class BiMotor(Solonoid):
     def __init__(self, pins, rampTime=1000):
         super(BiMotor, self).__init__(pins, rampTime)
         # save pin numbers as GPIO.PWM objects
-        self.signals.clear()
+        self._signals.clear()
         for pin in pins:
-            self.signals.append(pulseio.PWMOut(pin))
+            self._signals.append(pulseio.PWMOut(pin))
 
     @property
     def value(self):
-        return (self.signals[0].duty_cycle - (self.signals[1].duty_cycle if len(self.signals) > 1 else 0)) / 0xffffff * 100.0
+        return (self._signals[0].duty_cycle - (self._signals[1].duty_cycle if len(self._signals) > 1 else 0)) / 0xffffff * 100.0
 
     # let val be the percentual target speed in range of [-1,1]
     @value.setter
@@ -144,24 +150,24 @@ class BiMotor(Solonoid):
         val = max(-100, min(100, round(val * 100)))
         # going forward
         if val > 0:
-            self.signals[0].duty_cycle = val * 0xffffff
-            if len(self.signals) > 1:
-                self.signals[1].duty_cycle = 0
+            self._signals[0].duty_cycle = val * 0xffffff
+            if len(self._signals) > 1:
+                self._signals[1].duty_cycle = 0
         # going backward
         elif val < 0:
-            self.signals[0].duty_cycle = 0
-            if len(self.signals) > 1:
-                self.signals[1].duty_cycle = (val * -1) * 0xffffff
+            self._signals[0].duty_cycle = 0
+            if len(self._signals) > 1:
+                self._signals[1].duty_cycle = (val * -1) * 0xffffff
         # otherwise stop
         else:
-            self.signals[0].duty_cycle = 0
-            if len(self.signals) > 1:
-                self.signals[1].duty_cycle = 0
+            self._signals[0].duty_cycle = 0
+            if len(self._signals) > 1:
+                self._signals[1].duty_cycle = 0
 
     # destructor to disable GPIO.PWM operation
     def __del__(self):
         super(BiMotor, self).__del__()
-        for signal in self.signals:
+        for signal in self._signals:
             signal.deinit()
 # end BiMotor child class
 
@@ -175,19 +181,19 @@ class PhasedMotor(Solonoid):
     """
     def __init__(self, pins, rampTime=1000):
         super(PhasedMotor, self).__init__(pins, rampTime)
-        self.signals.clear()
-        self.signals.append(pulseio.PWMOut(pins[0]))
+        self._signals.clear()
+        self._signals.append(pulseio.PWMOut(pins[0]))
         if len(pins) >= 1:
             # save direction signal pin # & set coresponding signal value to true
-            self.signals.append(digitalio.DigitalInOut(pins[1]))
-            self.signals[1].switch_to_output(value=True)
+            self._signals.append(digitalio.DigitalInOut(pins[1]))
+            self._signals[1].switch_to_output(value=True)
 
     @property
     def value(self):
-        if len(self.signals) > 1:
-            return float(self.signals[0]) / 0xffffff * 100.0 * (1 if bool(self.signals[1].value) else -1)
+        if len(self._signals) > 1:
+            return float(self._signals[0]) / 0xffffff * 100.0 * (1 if bool(self._signals[1].value) else -1)
         else:
-            return float(self.signals[0]) / 0xffffff * 100.0
+            return float(self._signals[0]) / 0xffffff * 100.0
 
     @value.setter
     def value(self, val):
@@ -196,37 +202,64 @@ class PhasedMotor(Solonoid):
         val = max(-100, min(100, round(val * 100)))
         # going forward
         if val > 0:
-            self.signals[0].duty_cycle = val * 0xffffff
-            if len(self.signals) > 1:
-                self.signals[1].value = True
+            self._signals[0].duty_cycle = val * 0xffffff
+            if len(self._signals) > 1:
+                self._signals[1].value = True
         # going backward
         elif val < 0:
-            self.signals[0].duty_cycle = (val * -1) * 0xffffff
-            if len(self.signals) > 1:
-                self.signals[1].value = False
+            self._signals[0].duty_cycle = (val * -1) * 0xffffff
+            if len(self._signals) > 1:
+                self._signals[1].value = False
         # otherwise stop
         else:
-            self.signals[0].duty_cycle = 0
-            if len(self.signals) > 1:
-                self.signals[1] = True
+            self._signals[0].duty_cycle = 0
+            if len(self._signals) > 1:
+                self._signals[1] = True
 
     # destructor to disable GPIO.PWM operation
     def __del__(self):
         super(PhasedMotor, self).__del__()
-        for signal in self.signals:
+        for signal in self._signals:
             signal.deinit()
 # end PhasedMotor child class
 
-# pylint: disable=invalid-name
-if __name__ == "__main__":
-    motor = BiMotor([18, 17])
-    motor.value = 0
-    motor.cellerate(1.0)
-    time.sleep(1)
-    print(motor.value)
-    motor.cellerate(-1.0)
-    time.sleep(2)
-    print(motor.value)
-    motor.cellerate(0.0)
-    time.sleep(1)
-    print(motor.value)
+class NRF24L01():
+    """This class acts as a wrapper for circuitpython-nrf24l01 module to remotely control a peripheral device using nRF24L01 radio transceivers"""
+    def __init__(self, spi, pins, address=b'rfpi0'):
+        if not type(pins, list) and len(pins) != 2:
+            raise ValueError('pins parameter must be a list of length 2 (CE and CSN respectively)')
+        if not type(spi, SPI):
+            raise ValueError('spi parameter must be an object of type busio.SPI')
+        pins[0] = digitalio.DigitalInOut(pins[0])
+        pins[1] = digitalio.DigitalInOut(pins[1])
+        self._rf = RF24(spi, pins[0], pins[1])
+        self._rf.open_tx_pipe(address)
+        # self._rf.what_happened(1)
+
+    def go(self, cmd):
+        """Assembles a bytearray to be used for transmitting commands over the air"""
+        temp = struct.pack('bb', cmd[0], cmd[1])
+        print('transmit', repr(cmd), 'returned:', self._rf.send(temp))
+
+
+class USB():
+    """
+    This class acts as a wrapper to pyserial module for communicating to an external USB serial device. Specifically designed for an Arduino running custom code
+    """
+    def __init__(self, address='/dev/ttyUSB0', baud=-1):
+        try:
+            if baud < 0:
+                self._ser = serial.Serial(address)
+            else:
+                self._ser = serial.Serial(address, baud)
+            print('Successfully opened port', address, '@', baud, 'to Arduino device')
+        except serial.SerialException:
+            raise ValueError('unable to open serial arduino device @ port {}'.format(address))
+
+    def go(self, cmd):
+        """ assembles a encoded bytearray for outputting on the serial connection"""
+        command = ' '
+        for c in cmd:
+            command += repr(c) + ' '
+        command = bytes(command.encode('utf-8'))
+        self._ser.write(command)

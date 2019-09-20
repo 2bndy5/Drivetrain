@@ -7,40 +7,19 @@ This module contains the necessary algorithms for utilizing different DC motor t
 """
 # pylint: disable=arguments-differ,invalid-name
 
-import time
-from gpiozero import AngularServo
+# from gpiozero import AngularServo
 from .gpio_zero_stepper_motor import Stepper
-from .motor import BiMotor, PhasedMotor
+from .motor import BiMotor, PhasedMotor, NRF24L01, USB
 
 
 class Drivetrain:
     """A base class that is only used for inheriting various types of drivetrain configurations."""
-    def __init__(self, pins, phased, maxSpeed):
-        self.motors = []
+    def __init__(self, motors, maxSpeed):
+        for i, m in enumerate(motors):
+            if not type(m, (BiMotor, PhasedMotor, Stepper)):
+                raise ValueError('unknown motor (index {}) of type {}'.format(i, type(m)))
+        self._motors = motors
         self.max_speed = max(0, min(maxSpeed, 100))  # ensure proper range
-        phased_i = 0
-        for i, p in enumerate(pins):
-            # try:
-            if len(p) == 1:  # use servo
-                print('motor', i, 'Servo @', repr(p))
-                self.motors.append(AngularServo(p[0]))
-            elif len(p) == 4:  # use bipolar stepper
-                print('motor', i, 'Stepper @', repr(p))
-                self.motors.append(
-                    Stepper([p[0], p[1], p[2], p[3]]))
-            elif len(p) == 2:  # use DC bi-directional motor
-                print('motor', i, 'DC @', repr(
-                    p), 'phased:', phased[phased_i])
-                if phased_i < len(phased) and phased[phased_i]:
-                    # is the flag specified and does it use a Phase control signal
-                    # self.motors.append(PhaseEnableMotor(p[0], p[1]))
-                    self.motors.append(PhasedMotor(p))
-                else:
-                    # self.motors.append(Motor(p[0], p[1])
-                    self.motors.append(BiMotor(p))
-                phased_i += 1
-            else:
-                print('unknown motor type from', len(p), '=', repr(p))
 
     def _gogo(self, aux, init=2):
         """A helper function to the child classes to handle extra periphial motors attached to the `Drivetrain` object. This is only useful for motors that serve a specialized purpose other than propulsion.
@@ -51,12 +30,11 @@ class Drivetrain:
         """
         if len(aux) > init:
             for i in range(init, len(aux)):
-                if i < len(self.motors):
+                if i < len(self._motors):
                     # print('motor[', i, '].value = ', aux[i] / 100.0, sep = '')
-                    self.motors[i].value = aux[i] / 100.0
+                    self._motors[i].value = aux[i] / 100.0
                 else:
-                    print(
-                        'motor[', i, '] not declared and/or installed', sep='')
+                    print('motor[', i, '] not declared and/or installed', sep='')
 
     def _print(self, start=0):
         """Prints the value of each motor.
@@ -64,12 +42,12 @@ class Drivetrain:
         :param int start: The index in the list of motors to start printing from until end of list.
 
         """
-        for i in range(start, len(self.motors)):
-            print('motor[', i, '].value = ', self.motors[i].value, sep='')
+        for i in range(start, len(self._motors)):
+            print('motor[', i, '].value = ', self._motors[i].value, sep='')
 
     def __del__(self):
-        self.motors.clear()
-        del self.motors
+        self._motors.clear()
+        del self._motors
 # end Drivetrain class
 
 
@@ -91,8 +69,8 @@ class BiPed(Drivetrain):
     """
     def __init__(self, pins, phased=None, maxSpeed=85):
         super(BiPed, self).__init__(pins, phased, maxSpeed)
-        self.right = 0
-        self.left = 0
+        self._right = 0
+        self._left = 0
 
     def go(self, cmds, smooth=True):
         """This function applies the user input to motor output according to drivetrain's motor configuration.
@@ -115,34 +93,33 @@ class BiPed(Drivetrain):
         cmds[0] = round(max(-100, min(100, cmds[0])))
         cmds[1] = round(max(-100, min(100, cmds[1])) * (self.max_speed / 100.0))
         # assuming left/right axis is null (just going forward or backward)
-        self.left = cmds[1]
-        self.right = cmds[1]
+        self._left = cmds[1]
+        self._right = cmds[1]
         if abs(cmds[0]) == 100:
             # if forward/backward axis is null ("turning on a dime" functionality)
             cmds[0] *= self.max_speed / 100.0
-            self.right = cmds[0]
-            self.left = cmds[0] * -1
+            self._right = cmds[0]
+            self._left = cmds[0] * -1
         else:
             # if forward/backward axis is not null and left/right axis is not null
             offset = (100 - abs(cmds[0])) / 100.0
             if cmds[0] > 0:
-                self.right *= offset
+                self._right *= offset
             elif cmds[0] < 0:
-                self.left *= offset
+                self._left *= offset
         if smooth:
-            self.motors[0].cellerate(self.left / 100.0)
-            self.motors[1].cellerate(self.right / 100.0)
+            self._motors[0].cellerate(self._left / 100.0)
+            self._motors[1].cellerate(self._right / 100.0)
         else:
-            self.motors[0].value = self.left / 100.0
-            self.motors[1].value = self.right / 100.0
+            self._motors[0].value = self._left / 100.0
+            self._motors[1].value = self._right / 100.0
         self._gogo(cmds)
 
     def print(self):
         """Prints all the motors current values."""
-        print("left =", self.left)
-        print("right =", self.right)
+        print("left =", self._left)
+        print("right =", self._right)
         super(BiPed, self)._print(2)
-
 # end BiPed class
 
 
@@ -164,8 +141,8 @@ class QuadPed(Drivetrain):
     """
     def __init__(self, pins, phased=None, maxSpeed=85):
         super(QuadPed, self).__init__(pins, phased, maxSpeed)
-        self.forward_reverse = 0  # forward/reverse direction
-        self.left_right = 0  # left/right direction
+        self._forward_reverse = 0  # forward/reverse direction
+        self._left_right = 0  # left/right direction
 
     def go(self, cmds, smooth=True):
         """This function applies the user input to motor output according to drivetrain's motor configuration.
@@ -188,41 +165,32 @@ class QuadPed(Drivetrain):
         cmds[0] = round(max(-100, min(100, cmds[0])))
         cmds[1] = round(max(-100, min(100, cmds[1])) * (self.max_speed / 100.0))
         # set the axis directly to their corresponding motors
-        self.left_right = cmds[0]
-        self.forward_reverse = cmds[1]
+        self._left_right = cmds[0]
+        self._forward_reverse = cmds[1]
         if smooth:
-            self.motors[0].cellerate(self.left_right / 100.0)
-            self.motors[1].cellerate(self.forward_reverse / 100.0)
+            self._motors[0].cellerate(self._left_right / 100.0)
+            self._motors[1].cellerate(self._forward_reverse / 100.0)
         else:
-            self.motors[0].value = self.left_right / 100.0
-            self.motors[1].value = self.forward_reverse / 100.0
+            self._motors[0].value = self._left_right / 100.0
+            self._motors[1].value = self._forward_reverse / 100.0
         self._gogo(cmds)
 
     # for debugging purposes
     def print(self):
         """Prints all the motors current values."""
-        print("forward/reverse =", self.forward_reverse)
-        print("left/right =", self.left_right)
+        print("forward/reverse =", self._forward_reverse)
+        print("left/right =", self._left_right)
         super(QuadPed, self)._print(2)
 # end QuadPed class
 
+class External:
+    """A class to be used for controlling drivetrains not physically attached to the host controller. Currently only supports USB (Serial) and nRF24L01 (an spi based radio) as interfaces"""
+    def __init__(self, interface):
+        if type(interface, (USB, NRF24L01)):
+            self._interface = interface
+        else:
+            raise ValueError('The "External" drivetrain class only supports interfaces of type class USB or NRF24L01')
 
-if __name__ == "__main__":
-    myPins = [(18, 17), (13, 22)]
-    d = BiPed(myPins)
-    # d = QuadPed(myPins, cmd.m)
-    d.go([100, 0])
-    time.sleep(2)
-    d.go([0, 100])
-    time.sleep(2)
-    d.go([100, 100])
-    time.sleep(2)
-    d.go([-100, 0])
-    time.sleep(2)
-    d.go([0, -100])
-    time.sleep(2)
-    d.go([-100, -100])
-    time.sleep(2)
-    d.go([0, 0])
-
-    del d
+    def go(self, cmds):
+        """pass motor control commands to the appropriate interface (specified upon instantiation)."""
+        self._interface.go(cmds)
