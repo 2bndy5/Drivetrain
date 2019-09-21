@@ -8,7 +8,7 @@ This module contains the necessary algorithms for utilizing different DC motor t
 # pylint: disable=arguments-differ,invalid-name
 
 # from gpiozero import AngularServo
-from .gpio_zero_stepper_motor import Stepper
+from .stepper import Stepper
 from .motor import BiMotor, PhasedMotor, NRF24L01, USB
 
 

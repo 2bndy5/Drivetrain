@@ -4,6 +4,7 @@ Solonoid, BiMotor, & PhasedMotor
 ================================
 
 A collection of driver classes for different single phase DC motors implementing the threading module. Includes Solonoid (parent base class), BiMotor & PhasedMotor (children of Solonoid)
+
 """
 from math import pi as PI, cos
 from threading import Thread
