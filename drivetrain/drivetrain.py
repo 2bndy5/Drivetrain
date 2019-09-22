@@ -56,7 +56,7 @@ class _Drivetrain:
 
     @property
     def max_speed(self):
-        """This attribute determines a motor's top speed. Valid input values range [0,100]."""
+        """This attribute determines a motor's top speed. Valid input values range [0, 100]."""
         return self._max_speed
 
     @max_speed.setter
@@ -83,7 +83,7 @@ class BiPed(_Drivetrain):
         `StepperMotor`. The first 2 motors in this `list` are used to propell and steer
         respectively.
 
-    :param int max_speed: The maximum speed as a percentage in range [0,100] for the drivetrain's
+    :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
         forward and backward motion. Defaults to 85%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
 
@@ -105,8 +105,8 @@ class BiPed(_Drivetrain):
             .. important:: Ordering of the motor inputs contained in this list/tuple matters. They
                 should correspond to the following order:
 
-                1. forward/reverse magnitude in range [-100,100]
-                2. left/right magnitude in range [-100,100]
+                1. forward/reverse magnitude in range [-100, 100]
+                2. left/right magnitude in range [-100, 100]
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
@@ -163,7 +163,7 @@ class QuadPed(_Drivetrain):
         or `StepperMotor`. The first 2 motors in this `list` are used to propell and steer
         respectively.
 
-    :param int max_speed: The maximum speed as a percentage in range [0,100] for the drivetrain's
+    :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
         forward and backward motion. Defaults to 85%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
 
@@ -185,8 +185,8 @@ class QuadPed(_Drivetrain):
             .. important:: Ordering of the motor inputs contained in this list/tuple matters. They
                 should correspond to the following order:
 
-                1. forward/reverse magnitude in range [-100,100]
-                2. left/right magnitude in range [-100,100]
+                1. forward/reverse magnitude in range [-100, 100]
+                2. left/right magnitude in range [-100, 100]
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'

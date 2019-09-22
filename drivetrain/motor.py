@@ -162,8 +162,9 @@ class Solonoid:
 
 
 class BiMotor(Solonoid):
-    """This class is meant be used for motors driver by driver boards that expect 2 PWM outputs.
-    Each pin represent the controlling signal for the motor's speed in a single rotational direction.
+    """This class is meant be used for motors driver by driver boards/ICs that expect 2 PWM outputs
+    . Each pin represent the controlling signal for the motor's speed in a single rotational
+    direction.
 
     :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive the
         motor. The length of this `list` or `tuple` must be in range [1, 2]; any additional
@@ -221,7 +222,7 @@ class BiMotor(Solonoid):
 
 
 class PhasedMotor(Solonoid):
-    """This class is meant be used for motors driven by driver boards that expect:
+    """This class is meant be used for motors driven by driver boards/ICs that expect:
 
         * 1 PWM output (to control the motor's speed)
         * 1 digital output (to control the motor's rotational direction)
