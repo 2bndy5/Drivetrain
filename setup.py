@@ -33,7 +33,8 @@ setup(
 
     install_requires=[
         'adafruit-blinka',
-        'pyserial'
+        'pyserial',
+        'circuitpython-nrf24l01'
     ],
 
     # Choose your license
