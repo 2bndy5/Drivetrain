@@ -27,12 +27,14 @@ class Solonoid:
     control up to 2 solonoids (see also `value` attribute for more details) as in the case of an
     actual locomotive train.
 
-    :param list,tuple pins: A `list` or `tuple` of (`board` module) pins that are used to drive the
+    :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive the
         to the solonoid(s). The length of this `list`/`tuple` must be in range [1, 2] (any
         additional items/pins will be ignored).
 
     :param int ramp_time: This parameter is really a placeholder for the child classes
         `BiMotor` & `PhasedMotor` as it has no affect on objects instantiated with this base class.
+        Changing this value has not been tested and will probably only slightly delay the
+        solonoid(s) outputs.
 
     """
     def __init__(self, pins, ramp_time=0):
@@ -118,14 +120,14 @@ class Solonoid:
 
     @property
     def value(self):
-        """This attribute will contains the current output value of the solonoid(s) in range
+        """This attribute contains the current output value of the solonoid(s) in range
         [-1, 1]. An invalid input value will be clamped to an `int` in the proper range.
 
-        .. note:: Because this class is built to handle 2 pins and tailored for solonoids, any
-            negative value will only energize the solonoid driven by the second pin (passed in
-            ``pins`` parameter to the constructor). Any positive value will only energize the
-            solonoid driven by the first pin (passed in ``pins`` parameter to the constructor).
-            Alternatively, a ``0`` value will de-energize both solonoids.
+        .. note:: Because this class is built to handle 2 pins (passed in the ``pins`` parameter
+            to the constructor) and tailored for solonoids, any negative value will only energize
+            the solonoid driven by the second pin . Any positive value will only energize the
+            solonoid driven by the first pin. Alternatively, a ``0`` value will de-energize both
+            solonoids.
 
         """
         return self._signals[0].value or self._signals[1].value if len(self._signals) > 1 else self._signals[0].value
@@ -163,7 +165,7 @@ class BiMotor(Solonoid):
     """This class is meant be used for motors driver by driver boards that expect 2 PWM outputs.
     Each pin represent the controlling signal for the motor's speed in a single rotational direction.
 
-    :param list,tuple pins: A `list` or `tuple` of (`board` module) pins that are used to drive the
+    :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive the
         motor. The length of this `list` or `tuple` must be in range [1, 2]; any additional
         items/pins will be ignored, and a `ValueError` exception is thrown if no pins are passed
         (an empty `tuple`/`list`). If only 1 pin is passed then the, motor will only rotate in 1
@@ -191,7 +193,7 @@ class BiMotor(Solonoid):
 
     @property
     def value(self):
-        """This attribute will contains the current output value of the solonoid(s) in range
+        """This attribute contains the current output value of the solonoid(s) in range
         [-65535, 65535]. An invalid input value will be clamped to an `int` in the proper range.
         A negative value represents the motor's speed in reverse rotation. A positive value
         reprsents the motor's speed in forward rotation."""
@@ -224,7 +226,7 @@ class PhasedMotor(Solonoid):
         * 1 PWM output (to control the motor's speed)
         * 1 digital output (to control the motor's rotational direction)
 
-    :param list,tuple pins: A `list` or `tuple` of (`board` module) pins that are used to drive the
+    :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive the
         to the motor. The length of this `list`/`tuple` must be 2, otherwise a `ValueError`
         exception is thrown.
 
@@ -253,7 +255,7 @@ class PhasedMotor(Solonoid):
 
     @property
     def value(self):
-        """This attribute will contains the current output value of the solonoid(s) in range
+        """This attribute contains the current output value of the solonoid(s) in range
         [-65535, 65535]. An invalid input value will be clamped to an `int` in the proper range.
         A negative value represents the motor's speed in reverse rotation. A positive value
         reprsents the motor's speed in forward rotation."""

@@ -15,7 +15,8 @@ import digitalio
 
 class StepperMotor:
     """A class designed to control unipolar or bipolar stepper motors. It is still a work in
-        progress as there is no smoothing algorithm applied to the motor's input.
+    progress as there is no smoothing algorithm nor limited maximum speed applied to the motor's
+    input.
 
     :param list,tuple pins: A `list` or `tuple` of (`board` module) pins that are used to drive the
         stepper motor. The length of this `list` or `tuple` must be divisible by 2, otherwise a
@@ -25,8 +26,9 @@ class StepperMotor:
         revolution. Defaults to 4096. This should correlate with information found in your
         motor's datasheet.
 
-    :param int,float degree_per_step: The value that represents how many degrees the motor moves per
-        single step. This should correlate with information found in your motor's datasheet.
+    :param int,float degree_per_step: The value that represents how many degrees the motor moves
+        per single step. Defaults to 45/512 or 5.625°/64. This should correlate with information
+        found in your motor's datasheet.
 
     :param string step_type: This parameter is used upon instantiation to specify what kind of
         stepping pattern the motor uses. Valid values are limited to:
@@ -41,9 +43,11 @@ class StepperMotor:
         information found in your motor's datasheet.
 
     """
-    def __init__(self, pins, steps_per_rev=4096, degree_per_step=0.087890625, step_type='half', rpm=60):
-        if len(pins) % 2:
-            raise ValueError('The number of pins should be divisible by 2.')
+    def __init__(self, pins, steps_per_rev=4096, degree_per_step=45/512, step_type='half', rpm=60):
+        if len(pins) % 2 or not pins:
+            raise ValueError('The number of pins should be divisible by 2 and greater than 0.')
+        if step_type not in ('half', 'full', 'wave'):
+            raise ValueError("Unrecognized step type. Expected 'half', 'full', or 'wave'")
         self._spr = steps_per_rev # max # of steps in 1 revolution
         self._dps = degree_per_step # used to calculate angle
         self._step_type = step_type # can be 'wave', 'full', or 'half' for stepping pattern
@@ -62,7 +66,7 @@ class StepperMotor:
 
     def reset0angle(self):
         """A calibrating function that will reset the motor's zero angle to its current position.
-            This can function is also called when the motor's `value`, `steps`, or `angle`
+            This function is also called when the motor's `value`, `steps`, or `angle`
             attributes are set to `None`. Additionally, this function will stop all movement in the
             motor.
 
@@ -174,7 +178,7 @@ class StepperMotor:
         """Represents the number of the motor's angle from its zero angle position with respect to
             the ``steps_per_rev`` parameter passed to the constructor. This value will
             be in range [-180, 180]. Input values can be any `int` or `float` as any overflow
-            outside the range [0,360] is handled accordingly.
+            outside the range [0, 360] is handled accordingly.
 
         """
         return self._wrap_it(360, 0, (self._steps % self._spr) * self._dps)
@@ -219,9 +223,9 @@ class StepperMotor:
 
     @property
     def value(self):
-        """Represents the percentual value of the motor's angle in range [-100,100] with respect to
+        """Represents the percentual value of the motor's angle in range [-100, 100] with respect to
             the ``steps_per_rev`` parameter passed to the constructor. Invalid input values
-            will be constrained to an `int` in the proper range.
+            will be constrained to an `int` in the range [-100, 100].
 
         """
         return round(self._wrap_it(self._spr / 2, self._spr / -2, self._steps) / (self._spr / 2) * 100, 1)
