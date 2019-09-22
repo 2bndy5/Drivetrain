@@ -262,6 +262,7 @@ class External:
         .. important:: The receiving interface will be running code not found in this library. It
             is up to you write that code. We are currently still testing this feature with another
             library meant to act as a counterpart. Links and docs will be provided when stable
-            enough for pre-release; please be patient. 
+            enough for pre-release; please be patient and `stay tuned to this issue.
+            <https://github.com/DVC-Viking-Robotics/Drivetrain/issues/3>`_ 
         """
         self._interface.go(cmds)
