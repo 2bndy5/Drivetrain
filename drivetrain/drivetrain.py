@@ -99,7 +99,8 @@ class BiPed(_Drivetrain):
 
         :param list,tuple cmds: A `list` or `tuple` of input motor commands to be processed and
             passed to the motors. This list must have at least 2 items (input values), and any
-            additional items will be ignored.
+            additional items will be ignored. A `list`/`tuple` of length less than 2 will throw a
+            `ValueError` exception.
 
             .. important:: Ordering of the motor inputs contained in this list/tuple matters. They
                 should correspond to the following order:
@@ -120,6 +121,8 @@ class BiPed(_Drivetrain):
                 become dislodged on sudden and drastic changes in speed.
 
         """
+        if len(cmds) < 2:
+            raise ValueError("the list/tuple of commands must be at least 2 items long")
         cmds[0] = max(-100, min(100, int(cmds[0])))
         cmds[1] = max(-100, min(100, int(cmds[1])))
         if cmds[1] > self._max_speed:
@@ -176,7 +179,8 @@ class QuadPed(_Drivetrain):
 
         :param list,tuple cmds: A `list` or `tuple` of input motor commands to be passed to the
             motors. This `list` / `tuple` must have at least 2 items (input values), and any
-            additional item(s) will be ignored.
+            additional item(s) will be ignored. A `list`/`tuple` of length less than 2 will throw a
+            `ValueError` exception.
 
             .. important:: Ordering of the motor inputs contained in this list/tuple matters. They
                 should correspond to the following order:
@@ -199,7 +203,7 @@ class QuadPed(_Drivetrain):
         """
         # make sure arguments are in their proper range
         if len(cmds) < 2:
-            raise ValueError("expected 2 inputs in the command list, received less than 2")
+            raise ValueError("the list/tuple of commands must be at least 2 items long")
         # make sure speeds are an integer (not decimal/float)
         cmds[0] = max(-100, min(100, int(cmds[0])))
         cmds[1] = max(-100, min(100, int(cmds[1])))
