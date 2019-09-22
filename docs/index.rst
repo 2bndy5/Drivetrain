@@ -9,10 +9,10 @@ Table of Contents
 
     self
 
-.. .. toctree::
-..     :caption: Examples
+.. toctree::
+    :caption: Examples
 
-..     examples
+    examples
 
 .. toctree::
     :caption: API Reference

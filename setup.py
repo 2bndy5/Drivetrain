@@ -32,8 +32,7 @@ setup(
     author_email='2bndy5@gmail.com',
 
     install_requires=[
-        'adafruit-blinka',
-        'gpiozero'
+        'adafruit-blinka'
     ],
 
     # Choose your license
@@ -52,7 +51,7 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords='raspberry pi driver motor phased threaded drivetrain',
+    keywords='raspberry pi driver motor phased threading drivetrain solonoid bidirectional',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().

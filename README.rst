@@ -5,14 +5,12 @@
 Introduction
 ============
 
-A collection of motor drivers classes and a special drivetrain class to coordinate the motors objects in generic configurations. This takes advatage of the threading module for smoothing motor input commands in background running threads. This was developed for & tested on the Raspberry PI.
+A collection of motor drivers classes and specialized drivetrain classes to coordinate the motors' objects in generic configurations. This takes advatage of the threading module for smoothing motor input commands in background running threads. This was developed for & tested on the Raspberry PI.
 
 Dependencies
 ============
 
 This library requires the `digitalio` and `pulseio` modules from the `adafruit-blinka Library <https://pypi.org/project/Adafruit-Blinka/>`_
-
-The stepper motor driver class was originally built atop the gpiozero base classes, and is due for an upgrade to depend on circuitpython's board and digitalio modules. All this means the library is still a work in progress, and `gpiozero library <https://pypi.org/project/gpiozero/>`_ is also currently required (will get dropped soon).
 
 Installation
 ============
@@ -36,3 +34,8 @@ Installing this library should also automatically install the `adafruit-blinka l
     pip3 install adfruit-blinka
 
 Again, some cases may require the command be prefixed with ``sudo`` or appended with ``--user``.
+
+Examples
+===========
+
+Try out any of the simple test examples in the `examples <examples/>`_ to make sure everything (including pin connections & library installation) is setup correctly.
