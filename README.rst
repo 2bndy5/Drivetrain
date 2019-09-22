@@ -38,4 +38,4 @@ Again, some cases may require the command be prefixed with ``sudo`` or appended 
 Examples
 ===========
 
-Try out any of the simple test examples in the `examples <examples/>`_ to make sure everything (including pin connections & library installation) is setup correctly.
+Try out any of the simple test examples in the `examples <https://drivetrain.readthedocs.io/en/latest/examples.html>`_ to make sure everything (including pin connections & library installation) is setup correctly.
