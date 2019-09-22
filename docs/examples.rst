@@ -1,4 +1,4 @@
-.. note:: To minimize the margin of error these during tests, we suggest connecting each motor pin (specified in the example codes) to its own resistor and LED (in series). By doing so, you can distinguish between pinout errors and faulty motor driver ICs more easily (not to mention doing away with the motors' isolated power requirements).
+.. note:: To minimize the margin of error during these tests, we suggest connecting each motor pin (specified in the example codes) to its own resistor and LED (in series). By doing so, you can distinguish between pinout errors and faulty motor driver ICs more easily (not to mention doing away with the motors' isolated power requirements).
 
 BiMotor test
 ------------
