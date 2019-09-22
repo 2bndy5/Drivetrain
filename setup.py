@@ -32,7 +32,8 @@ setup(
     author_email='2bndy5@gmail.com',
 
     install_requires=[
-        'adafruit-blinka'
+        'adafruit-blinka',
+        'pyserial'
     ],
 
     # Choose your license
