@@ -19,6 +19,12 @@ QuadPed Drivetrain
     :members:
     :inherited-members:
 
+External Drivetrain
+-------------------
+
+.. autoclass:: drivetrain.drivetrain.External
+    :members:
+
 Solonoid
 ----------------
 
@@ -43,4 +49,16 @@ StepperMotor
 ----------------
 
 .. autoclass:: drivetrain.stepper.StepperMotor
+    :members:
+
+nRF24L01 Interface
+------------------
+
+.. autoclass:: drivetrain.motor.NRF24L01
+    :members:
+
+USB Interface
+------------------
+
+.. autoclass:: drivetrain.motor.USB
     :members:

@@ -1,3 +1,24 @@
+# The MIT License (MIT)
+#
+# Copyright (c) 2019 Brendan Doherty
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 """
 ================================
 Solonoid, BiMotor, & PhasedMotor
@@ -23,17 +44,17 @@ class Solonoid:
     module, but can be used for solonoids if needed. Solonoids, by nature, cannot be controlled
     analogously (cannot be any value other than `True` or `False`). Despite the fact that this class
     holds all the smoothing input algorithms for its child classes, the output values, when
-    instantiated indepedently, are not actually smoothed. With that said, this class can be used to
-    control up to 2 solonoids (see also `value` attribute for more details) as in the case of an
-    actual locomotive train.
+    instantiated objects with this base class, are not actually smoothed. With that said, this
+    class can be used to control up to 2 solonoids (see also `value` attribute for more details) as
+    in the case of an actual locomotive train.
 
     :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive the
-        to the solonoid(s). The length of this `list`/`tuple` must be in range [1, 2] (any
+        the solonoid(s). The length of this `list`/`tuple` must be in range [1, 2] (any
         additional items/pins will be ignored).
 
     :param int ramp_time: This parameter is really a placeholder for the child classes
         `BiMotor` & `PhasedMotor` as it has no affect on objects instantiated with this base class.
-        Changing this value has not been tested and will probably only slightly delay the
+        Changing this value has not been tested and will probably slightly delay the
         solonoid(s) outputs.
 
     """
@@ -73,10 +94,10 @@ class Solonoid:
         directly to bypass the smoothing algorithm.
 
         .. note:: Since the change in speed (target - initial) is also used to determine how much
-            time will be used to smooth the input, this parameter's value will represent the maximum
-            time it takes for the motor to go from full reverse to full forward and vice versa. If
-            the motor is going from rest to either full reverse or full forward, then the time it
-            takes to do that will be half of this parameter's value.
+            time will be used to smooth the input, this attribute's value will represent the
+            maximum time it takes for the motor to go from full reverse to full forward and vice
+            versa. If the motor is going from rest to either full reverse or full forward, then
+            the time it takes to do that will be half of this attribute's value.
 
         """
         return self._dt
@@ -162,14 +183,14 @@ class Solonoid:
 
 
 class BiMotor(Solonoid):
-    """This class is meant be used for motors driver by driver boards/ICs that expect 2 PWM outputs
+    """This class is meant be used for motors driven by driver boards/ICs that expect 2 PWM outputs
     . Each pin represent the controlling signal for the motor's speed in a single rotational
     direction.
 
-    :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive the
-        motor. The length of this `list` or `tuple` must be in range [1, 2]; any additional
+    :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive
+        the motor. The length of this `list` or `tuple` must be in range [1, 2]; any additional
         items/pins will be ignored, and a `ValueError` exception is thrown if no pins are passed
-        (an empty `tuple`/`list`). If only 1 pin is passed then the, motor will only rotate in 1
+        (an empty `tuple`/`list`). If only 1 pin is passed, then the motor will only rotate in 1
         direction depending on how the motor is connected to the motor driver.
 
     :param int ramp_time: The time (in milliseconds) that is used to smooth the motor's input.
@@ -291,10 +312,10 @@ class NRF24L01():
         .. note:: This object should be shared among other driver classes that connect to different
             devices on the same SPI bus (SCK, MOSI, & MISO pins)
 
-    :param string address: This will be the RF address used to transmit to the receiving nRF24L01
-        transceiver. For more information on this parameters usage, please read the documentation
-        on the using the `circuitpython-nrf24l01 library
-        <https://circuitpython-nrf24l01.rtfd.io/en/latest/api.html#circuitpython_nrf24l01.RF24.open_rx_pipe>`_
+    :param bytearray address: This will be the RF address used to transmit to the receiving
+        nRF24L01 transceiver. For more information on this parameter's usage, please read the
+        documentation on the using the `circuitpython-nrf24l01 library
+        <https://circuitpython-nrf24l01.rtfd.io/en/latest/api.html>`_
 
     """
     def __init__(self, spi, pins, address=b'rfpi0'):
@@ -302,32 +323,34 @@ class NRF24L01():
             raise ValueError('pins parameter must be a list of length 2 (CE and CSN respectively)')
         if not type(spi, SPI):
             raise ValueError('spi parameter must be an object of type busio.SPI')
-        pins[0] = digitalio.DigitalInOut(pins[0])
-        pins[1] = digitalio.DigitalInOut(pins[1])
+        pins[0] = digitalio.DigitalInOut(pins[0]) # CSN
+        pins[1] = digitalio.DigitalInOut(pins[1]) # CE
         self._rf = RF24(spi, pins[0], pins[1])
         self._rf.open_tx_pipe(address)
-        # self._rf.what_happened(1)
+        # self._rf.what_happened(1) # prints radio condition
 
-    def go(self, cmd):
-        """Assembles a bytearray to be used for transmitting commands over the air.
+    def go(self, cmds):
+        """Assembles a bytearray to be used for transmitting commands over the air to a receiving
+        nRF24L01 transceiver.
 
-        :param bytearray cmd: A bytearray of exactly 2 bytes in length. Future development
-            may lift this restriction, but currently only a bytearray of 1 byte per axis (eg. x &
-            y) is expected.
+        :param list,tuple cmds: A `list` or `tuple` of `int` commands to be sent over the air
+            using the nRF24L01. This `list`/`tuple` can have any length (at least 1) as needed.
 
         """
-        temp = struct.pack('bb', cmd[0], cmd[1])
-        print('transmit', repr(cmd), 'returned:', self._rf.send(temp))
+        command = b''
+        for cmd in cmds:
+            command += bytes([cmd])
+        print('transmit', repr(cmd), 'returned:', self._rf.send(command))
 
 
 class USB():
     """
     This class acts as a wrapper to pyserial module for communicating to an external USB serial
-        device. Specifically designed for an Arduino running custom code.
+    device. Specifically designed for an Arduino running custom code.
 
     :param string address: The serial port address of the external serial device.
     :param int baud: The specific baudrate to be used for the serial connection. If left
-        unspecified, the serial will use a baudrate of 9600.
+        unspecified, the serial library will assume a baudrate of 9600.
 
     """
     def __init__(self, address='/dev/ttyUSB0', baud=-1):
@@ -336,19 +359,18 @@ class USB():
                 self._ser = serial.Serial(address)
             else:
                 self._ser = serial.Serial(address, baud)
-            print('Successfully opened port', address, '@', baud, 'to Arduino device')
+            print(f'Successfully opened port {address} @ {baud} to Arduino device')
         except serial.SerialException:
-            raise ValueError('unable to open serial arduino device @ port {}'.format(address))
+            raise ValueError(f'unable to open serial arduino device @ port {address}')
 
-    def go(self, cmd):
-        """Assembles an encoded bytearray for outputting on the serial connection. The ``cmd``
-            parameter can be any datatype you wish as it gets treated like a string using the
-            builtin datatype's ``__repr__()``. If you use a custom datatype, make sure the datatype
-            has a ``__repr__()`` override to return the datatype as a ``print()`` friendly string.
+    def go(self, cmds):
+        """Assembles an encoded bytearray for outputting over the Serial connection.
+        
+        :param list,tuple cmds: A `list` or `tuple` of `int` commands to be sent over the Serial
+            connection. This `list`/`tuple` can have any length (at least 1) as needed.
 
         """
-        command = ' '
-        for c in cmd:
-            command += repr(c) + ' '
-        command = bytes(command.encode('utf-8'))
+        command = b''
+        for cmd in cmds:
+            command += bytes([cmd])
         self._ser.write(command)

@@ -1,3 +1,24 @@
+# The MIT License (MIT)
+#
+# Copyright (c) 2019 Brendan Doherty
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 """
 
 Drivetrain Configuration Classes
@@ -41,7 +62,6 @@ class _Drivetrain:
         if len(aux) > init:
             for i in range(init, len(aux)):
                 if i < len(self._motors):
-                    # print('motor[', i, '].value = ', aux[i] / 100.0, sep = '')
                     self._motors[i].value = aux[i] / 100.0
                 else:
                     print(f'motor[{i}] not declared and/or installed')
@@ -71,7 +91,6 @@ class _Drivetrain:
     def __del__(self):
         self._motors.clear()
         del self._motors
-# end Drivetrain class
 
 class BiPed(_Drivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
@@ -150,8 +169,6 @@ class BiPed(_Drivetrain):
             self._motors[0].value = left * 655.35
             self._motors[1].value = right * 655.35
         self._gogo(cmds)
-# end BiPed class
-
 
 class QuadPed(_Drivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
@@ -178,7 +195,7 @@ class QuadPed(_Drivetrain):
         configuration.
 
         :param list,tuple cmds: A `list` or `tuple` of input motor commands to be passed to the
-            motors. This `list` / `tuple` must have at least 2 items (input values), and any
+            motors. This `list`/`tuple` must have at least 2 items (input values), and any
             additional item(s) will be ignored. A `list`/`tuple` of length less than 2 will throw a
             `ValueError` exception.
 
@@ -201,7 +218,6 @@ class QuadPed(_Drivetrain):
                 become dislodged on sudden and drastic changes in speed.
 
         """
-        # make sure arguments are in their proper range
         if len(cmds) < 2:
             raise ValueError("the list/tuple of commands must be at least 2 items long")
         # make sure speeds are an integer (not decimal/float)
@@ -216,15 +232,20 @@ class QuadPed(_Drivetrain):
             self._motors[0].value = cmds[0] * 655.35
             self._motors[1].value = cmds[1] * 655.35
         self._gogo(cmds)
-# end QuadPed class
 
 class External:
     """A class to be used for controlling drivetrains not physically attached to the host
     controller. Currently only supports USB (Serial) and nRF24L01 (an spi based radio transceiver)
-    as interfaces.
+    as interfaces. Other interface options are being considered, like the RFM69 radio, and a 
+    customized Arduino/CircuitPython device to acts as a slave I2C/SPI device.
 
     :param ~motor.USB,~motor.NRF24L01 interface: The specialized interface type used to remotely
-        control the external drivetrain's motors.
+        control an external drivetrain.
+
+    .. warning:: This class is HIGHLY EXPERIMENTAL, and needs battlehardening. At this stage of
+        development, our only working solution involves separate libraries (written in python or
+        Arduino flavored C++) that acts as a counterpart to the interface specified here, but
+        nothing has been finalized yet.
 
     """
     def __init__(self, interface):
@@ -235,5 +256,12 @@ class External:
         self._last_cmds = []
 
     def go(self, cmds):
-        """pass motor control commands to the appropriate interface (specified upon instantiation)."""
+        """This function simply passes motor control commands to the specified ``interface``
+        (passed to the construstor).
+
+        .. important:: The receiving interface will be running code not found in this library. It
+            is up to you write that code. We are currently still testing this feature with another
+            library meant to act as a counterpart. Links and docs will be provided when stable
+            enough for pre-release; please be patient. 
+        """
         self._interface.go(cmds)
