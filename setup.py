@@ -53,7 +53,7 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords='raspberry pi driver motor phased threading drivetrain solonoid bidirectional',
+    keywords='raspberry pi driver motor phased threading drivetrain solenoid bidirectional locomotion powertrain',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().

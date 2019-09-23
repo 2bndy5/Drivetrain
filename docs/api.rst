@@ -5,19 +5,25 @@
 .. use this format as the module name: "adafruit_foo.foo"
 
 
-BiPed Drivetrain
+Tank Drivetrain
 ----------------
 
-.. autoclass:: drivetrain.drivetrain.BiPed
+.. autoclass:: drivetrain.drivetrain.Tank
     :members:
     :inherited-members:
 
-QuadPed Drivetrain
-------------------
+Automotive Drivetrain
+---------------------
 
-.. autoclass:: drivetrain.drivetrain.QuadPed
+.. autoclass:: drivetrain.drivetrain.Automotive
     :members:
     :inherited-members:
+
+Locomotive Drivetrain
+---------------------
+
+.. autoclass:: drivetrain.drivetrain.Locomotive
+    :members:
 
 External Drivetrain
 -------------------
@@ -25,10 +31,10 @@ External Drivetrain
 .. autoclass:: drivetrain.drivetrain.External
     :members:
 
-Solonoid
+Solenoid
 ----------------
 
-.. autoclass:: drivetrain.motor.Solonoid
+.. autoclass:: drivetrain.motor.Solenoid
     :members: value
 
 BiMotor

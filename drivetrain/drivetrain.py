@@ -25,27 +25,27 @@ Drivetrain Configuration Classes
 ================================
 
 This module contains the necessary algorithms for utilizing different DC motor types in different
-configurations for the raspberry pi. Currently only supporting the R2D2 (aliased here as `BiPed`)
-& typical openRC (aliased here as `QuadPed`) configurations.
+configurations for the raspberry pi. Currently only supporting the R2D2 (aliased here as `Tank`)
+& typical openRC (aliased here as `Automotive`) configurations.
 
 """
 # pylint: disable=arguments-differ,invalid-name
-
-# from gpiozero import AngularServo
+from threading import Thread
+from digitalio import DigitalInOut
 from .stepper import StepperMotor
-from .motor import BiMotor, PhasedMotor, NRF24L01, USB
+from .motor import Solenoid, BiMotor, PhasedMotor, NRF24L01, USB
 
 
-class _Drivetrain:
+class Drivetrain:
     """A base class that is only used for inheriting various types of drivetrain configurations."""
-    def __init__(self, motors, max_speed):
+    def __init__(self, motors, max_speed=100):
         for i, m in enumerate(motors):
-            if not type(m, (BiMotor, PhasedMotor, StepperMotor)):
+            if not type(m, (Solenoid, BiMotor, PhasedMotor, StepperMotor)):
                 raise ValueError('unknown motor (index {}) of type {}'.format(i, type(m)))
         if not motors:
             raise ValueError('No motors were passed to the drivetrain.')
         self._motors = motors
-        self._max_speed = max(0, min(max_speed if max_speed is not None else 0, 100))
+        self._max_speed = max(0, min(max_speed, 100))
 
     def _gogo(self, aux, init=2):
         """A helper function to the child classes to handle extra periphial motors attached to the
@@ -65,6 +65,7 @@ class _Drivetrain:
                     self._motors[i].value = aux[i] / 100.0
                 else:
                     print(f'motor[{i}] not declared and/or installed')
+
     @property
     def is_cellerating(self):
         """This attribute contains a `bool` indicating if the drivetrain's motors' speed is in the
@@ -92,25 +93,25 @@ class _Drivetrain:
         self._motors.clear()
         del self._motors
 
-class BiPed(_Drivetrain):
+class Tank(Drivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
     are shared tasks. For example: R2D2 has 2 motors (1 in each leg -- the front retractable
     wheel is free pivoting) for propulsion and steering.
 
     :param list motors: A `list` of motors that are to be controlled in concert. Each item in this
-        `list` represents a single motor must be of type `Solonoid`, `BiMotor`, `PhasedMotor`, or
-        `StepperMotor`. The first 2 motors in this `list` are used to propell and steer
-        respectively.
+        `list` represents a single motor object and must be of type `Solenoid`, `BiMotor`,
+        `PhasedMotor`, or `StepperMotor`. The first 2 motors in this `list` are used to propell and
+        steer respectively.
 
     :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
-        forward and backward motion. Defaults to 85%. This does not scale the motor speed's range,
+        forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
 
     """
-    def __init__(self, motors, max_speed=85):
+    def __init__(self, motors, max_speed=100):
         if len(motors) != 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
-        super(BiPed, self).__init__(motors, max_speed)
+        super(Tank, self).__init__(motors, max_speed)
 
     def go(self, cmds, smooth=True):
         """This function applies the user input to the motors' output according to drivetrain's motor
@@ -170,25 +171,25 @@ class BiPed(_Drivetrain):
             self._motors[1].value = right * 655.35
         self._gogo(cmds)
 
-class QuadPed(_Drivetrain):
+class Automotive(Drivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
     are separate tasks. The first motor is used to steer, and the second motor is used to
     propell.
 
     :param list motors: A `list` of motors that are to be controlled in concert. Each item in this
-        `list` represents a single motor and must be of type `Solonoid`, `BiMotor`, `PhasedMotor`,
-        or `StepperMotor`. The first 2 motors in this `list` are used to propell and steer
-        respectively.
+        `list` represents a single motor object and must be of type `Solenoid`, `BiMotor`,
+        `PhasedMotor`, or `StepperMotor`. The first 2 motors in this `list` are used to propell and
+        steer respectively.
 
     :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
-        forward and backward motion. Defaults to 85%. This does not scale the motor speed's range,
+        forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
 
     """
-    def __init__(self, motors, max_speed=85):
+    def __init__(self, motors, max_speed=100):
         if len(motors) != 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
-        super(QuadPed, self).__init__(motors, max_speed)
+        super(Automotive, self).__init__(motors, max_speed)
 
     def go(self, cmds, smooth=True):
         """This function applies the user input to motor output according to drivetrain's motor
@@ -236,7 +237,7 @@ class QuadPed(_Drivetrain):
 class External:
     """A class to be used for controlling drivetrains not physically attached to the host
     controller. Currently only supports USB (Serial) and nRF24L01 (an spi based radio transceiver)
-    as interfaces. Other interface options are being considered, like the RFM69 radio, and a 
+    as interfaces. Other interface options are being considered, like the RFM69 radio, and a
     customized Arduino/CircuitPython device to acts as a slave I2C/SPI device.
 
     :param ~motor.USB,~motor.NRF24L01 interface: The specialized interface type used to remotely
@@ -263,6 +264,73 @@ class External:
             is up to you write that code. We are currently still testing this feature with another
             library meant to act as a counterpart. Links and docs will be provided when stable
             enough for pre-release; please be patient and `stay tuned to this issue.
-            <https://github.com/DVC-Viking-Robotics/Drivetrain/issues/3>`_ 
+            <https://github.com/DVC-Viking-Robotics/Drivetrain/issues/3>`_
         """
         self._interface.go(cmds)
+
+class Locomotive(Drivetrain):
+    """This class relies soley on one `Solenoid` object controlling 2 solenoids in tandem. Like
+    with a locomotive train, applied force is alternated between the 2 solenoids using a
+    boolean-ized pressure sensor or switch to determine when the applied force is alternated.
+
+    :param ~derivetrain.motor.Solenoid solenoids: This object has 1 or 2 solenoids attached. It will be
+        used to apply the force for propulsion.
+
+    :param ~microcontroller.Pin switch: This should be the (`board` module's) pin that is connected
+        to the sensor that will be used to determine when the force for propulsion should be
+        alternated between solenoids.
+
+    .. note:: There is no option to control the speed in this drivetrain class due to the nature of
+        using solenoids for propulsion. Electronic solenoids apply either their full force or none
+        at all. We currently are not supporting dynamic linear actuators (in which the force
+        applied can vary) because they are basically motors simulating linear motion via a gear box
+        controlling a shaft's extension/retraction. This may change when we support servos though.
+
+    """
+    def __init__(self, solenoids, switch):
+        super(Locomotive, self).__init__([solenoids])
+        self._switch = DigitalInOut(switch)
+        self._switch.switch_to_input()
+        self._is_forward = True
+        self._cancel_thread = False
+        self._moving_thread = None
+
+    def _move(self):
+        while not self._cancel_thread:
+            alternate = (1 if self._switch.value else -1) * (-1 if self._is_forward else 1)
+            self._motors[0].go(alternate)
+
+    @property
+    def is_cellerating(self):
+        """This attribute contains a `bool` indicating if the drivetrain's applied force via
+        solenoids is in the midst of alternating. (read-only)"""
+        if self._moving_thread is not None:
+            return True
+        return False
+
+    def stop(self):
+        """This function stops the process of alternating applied force between the solenoids."""
+        if self._moving_thread is not None:
+            self._cancel_thread = True
+            self._moving_thread.join()
+            self._cancel_thread = False
+        self._moving_thread = None
+
+    def go(self, forward):
+        """This function starts the process of alternating applied force between the solenoids
+        with respect to the specified direction.
+
+        :param bool forward: `True` cylces the forces in a way that invokes a forward motion.
+            `False` does the same but invokes a force in the backward direction.
+
+        .. note:: Since we are talking about applying linear force to a wheel or axle, the
+            direction is entirely dependent on the physical orientation of the solenoids. In
+            other words, the armature of one solenoid should be attached to the wheel(s) or
+            axle(s) in a position that is always opposite the position of the other solenoid's
+            armature on the same wheel(s) or axel(s).
+
+        """
+        self._is_forward = forward
+        self.stop()
+        self._moving_thread = Thread(target=self._move)
+        self._moving_thread.start()

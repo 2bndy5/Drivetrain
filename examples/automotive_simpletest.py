@@ -1,5 +1,5 @@
 """
-A simple test of the QuadPed drivetrain class.
+A simple test of the Automotive drivetrain class.
 
 This iterates through a list of drivetrain commands
 and tallies up the ellapsed time taken to acheive each set of commands
@@ -8,11 +8,11 @@ as well as the ellapsed time taken for each motor to acheive each individual com
 # pylint: disable=invalid-name
 import time
 import board
-from drivetrain.drivetrain import QuadPed, BiMotor
+from drivetrain.drivetrain import Automotive, BiMotor
 
 mymotors = [BiMotor([board.D22, board.D13], ramp_time=2000),
             BiMotor([board.D17, board.D18], ramp_time=2000)]
-d = QuadPed(mymotors, max_speed=100)
+d = Automotive(mymotors, max_speed=100)
 testInput = [[100, 0],
              [-100, 0],
              [0, 0],

@@ -21,15 +21,14 @@
 # THE SOFTWARE.
 """
 ================================
-Solonoid, BiMotor, & PhasedMotor
+Solenoid, BiMotor, & PhasedMotor
 ================================
 
-A collection of driver classes for different single phase DC motors implementing the threading module. Includes Solonoid (parent base class), BiMotor & PhasedMotor (children of Solonoid)
+A collection of driver classes for different single phase DC motors implementing the threading module. Includes Solenoid (parent base class), BiMotor & PhasedMotor (children of Solenoid)
 
 """
 from math import pi as PI, cos
 from threading import Thread
-import struct
 import time
 import digitalio
 import pulseio
@@ -39,23 +38,23 @@ from circuitpython_nrf24l01 import RF24
 
 # pylint: disable=invalid-name,too-many-instance-attributes
 
-class Solonoid:
+class Solenoid:
     """This base class is meant be used as a parent to `BiMotor` and `PhasedMotor` classes of this
-    module, but can be used for solonoids if needed. Solonoids, by nature, cannot be controlled
-    analogously (cannot be any value other than `True` or `False`). Despite the fact that this class
+    module, but can be used for solenoids if needed. Solenoids, by nature, cannot be controlled
+    dynamically (cannot be any value other than `True` or `False`). Despite the fact that this class
     holds all the smoothing input algorithms for its child classes, the output values, when
     instantiated objects with this base class, are not actually smoothed. With that said, this
-    class can be used to control up to 2 solonoids (see also `value` attribute for more details) as
+    class can be used to control up to 2 solenoids (see also `value` attribute for more details) as
     in the case of an actual locomotive train.
 
     :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive the
-        the solonoid(s). The length of this `list`/`tuple` must be in range [1, 2] (any
+        the solenoid(s). The length of this `list`/`tuple` must be in range [1, 2] (any
         additional items/pins will be ignored).
 
     :param int ramp_time: This parameter is really a placeholder for the child classes
         `BiMotor` & `PhasedMotor` as it has no affect on objects instantiated with this base class.
         Changing this value has not been tested and will probably slightly delay the
-        solonoid(s) outputs.
+        solenoid(s) outputs.
 
     """
     def __init__(self, pins, ramp_time=0):
@@ -108,7 +107,9 @@ class Solonoid:
 
     def _stop_thread(self):
         if self._smoothing_thread is not None:
+            self._cancel_thread = True
             self._smoothing_thread.join()
+            self._cancel_thread = False
         self._smoothing_thread = None
 
     def _smooth(self):
@@ -133,22 +134,20 @@ class Solonoid:
         self._init_speed = self.value
         delta_t = abs((self._target_speed - self._init_speed) / 131070)
         self._end_smooth = self._start_smooth + delta_t * self._dt
-        self._cancel_thread = False
         self._stop_thread()
         self._smoothing_thread = Thread(target=self._smooth)
-        self._cancel_thread = True
         self._smoothing_thread.start()
 
     @property
     def value(self):
-        """This attribute contains the current output value of the solonoid(s) in range
+        """This attribute contains the current output value of the solenoid(s) in range
         [-1, 1]. An invalid input value will be clamped to an `int` in the proper range.
 
         .. note:: Because this class is built to handle 2 pins (passed in the ``pins`` parameter
-            to the constructor) and tailored for solonoids, any negative value will only energize
-            the solonoid driven by the second pin . Any positive value will only energize the
-            solonoid driven by the first pin. Alternatively, a ``0`` value will de-energize both
-            solonoids.
+            to the constructor) and tailored for solenoids, any negative value will only energize
+            the solenoid driven by the second pin . Any positive value will only energize the
+            solenoid driven by the first pin. Alternatively, a ``0`` value will de-energize both
+            solenoids.
 
         """
         return self._signals[0].value or self._signals[1].value if len(self._signals) > 1 else self._signals[0].value
@@ -179,10 +178,9 @@ class Solonoid:
         for signal in self._signals:
             signal.deinit()
         self._signals.clear()
-# end Solonoid parent class
 
 
-class BiMotor(Solonoid):
+class BiMotor(Solenoid):
     """This class is meant be used for motors driven by driver boards/ICs that expect 2 PWM outputs
     . Each pin represent the controlling signal for the motor's speed in a single rotational
     direction.
@@ -215,7 +213,7 @@ class BiMotor(Solonoid):
 
     @property
     def value(self):
-        """This attribute contains the current output value of the solonoid(s) in range
+        """This attribute contains the current output value of the solenoid(s) in range
         [-65535, 65535]. An invalid input value will be clamped to an `int` in the proper range.
         A negative value represents the motor's speed in reverse rotation. A positive value
         reprsents the motor's speed in forward rotation."""
@@ -242,7 +240,7 @@ class BiMotor(Solonoid):
 # end BiMotor child class
 
 
-class PhasedMotor(Solonoid):
+class PhasedMotor(Solenoid):
     """This class is meant be used for motors driven by driver boards/ICs that expect:
 
         * 1 PWM output (to control the motor's speed)
@@ -277,7 +275,7 @@ class PhasedMotor(Solonoid):
 
     @property
     def value(self):
-        """This attribute contains the current output value of the solonoid(s) in range
+        """This attribute contains the current output value of the solenoid(s) in range
         [-65535, 65535]. An invalid input value will be clamped to an `int` in the proper range.
         A negative value represents the motor's speed in reverse rotation. A positive value
         reprsents the motor's speed in forward rotation."""
@@ -340,7 +338,7 @@ class NRF24L01():
         command = b''
         for cmd in cmds:
             command += bytes([cmd])
-        print('transmit', repr(cmd), 'returned:', self._rf.send(command))
+        print('transmit', repr(cmds), 'returned:', self._rf.send(command))
 
 
 class USB():
@@ -365,7 +363,7 @@ class USB():
 
     def go(self, cmds):
         """Assembles an encoded bytearray for outputting over the Serial connection.
-        
+
         :param list,tuple cmds: A `list` or `tuple` of `int` commands to be sent over the Serial
             connection. This `list`/`tuple` can have any length (at least 1) as needed.
 

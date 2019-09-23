@@ -21,16 +21,16 @@ StepperMotor test
     :caption: examples/steppermotor_simpletest.py
     :linenos:
 
-BiPed Drivetrain test
+Tank Drivetrain test
 ---------------------
 
-.. literalinclude:: ../examples/biped_simpletest.py
-    :caption: examples/biped_simpletest.py
+.. literalinclude:: ../examples/tank_simpletest.py
+    :caption: examples/tank_simpletest.py
     :linenos:
 
-QuadPed Drivetrain test
------------------------
+Automotive Drivetrain test
+--------------------------
 
-.. literalinclude:: ../examples/quadped_simpletest.py
-    :caption: examples/quadped_simpletest.py
+.. literalinclude:: ../examples/automotive_simpletest.py
+    :caption: examples/automotive_simpletest.py
     :linenos:
