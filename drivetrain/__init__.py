@@ -8,6 +8,3 @@ MODEL = DETECT.board.id  # returns `None` on Windows
 
 ON_RASPI = False if MODEL is None else MODEL.startswith('RASPBERRY_PI')
 ON_JETSON = False if MODEL is None else MODEL.startswith('JETSON')
-
-if not ON_RASPI:
-    from .threaded.drivetrain import BiMotor, PhasedMotor, Solenoid, Tank, Automotive, Locomotive, USB, NRF24L01, External
