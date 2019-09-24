@@ -31,8 +31,8 @@ configurations for the raspberry pi. Currently only supporting the R2D2 (aliased
 """
 # pylint: disable=arguments-differ,invalid-name
 from digitalio import DigitalInOut
-from stepper import StepperMotor
-from motor import Solenoid, BiMotor, PhasedMotor, NRF24L01, USB
+from .stepper import StepperMotor
+from .motor import Solenoid, BiMotor, PhasedMotor, NRF24L01, USB
 IS_THREADED = True
 try:
     from threading import Thread
