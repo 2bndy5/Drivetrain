@@ -29,12 +29,16 @@ a unipolar stepper motor driver class
 """
 import time
 from math import floor, ceil
-from threading import Thread
 import digitalio
+IS_THREADED = True
+try:
+    from threading import Thread
+except ImportError:
+    IS_THREADED = False
 
 # pylint: disable=too-many-branches,too-many-instance-attributes
 
-class StepperMotor:
+class StepperMotor():
     """A class designed to control unipolar or bipolar stepper motors. It is still a work in
     progress as there is no smoothing algorithm nor limited maximum speed applied to the motor's
     input.
@@ -68,7 +72,7 @@ class StepperMotor:
         if len(pins) % 2 or not pins:
             raise ValueError('The number of pins should be divisible by 2 and greater than 0.')
         if step_type not in ('half', 'full', 'wave'):
-            raise ValueError("Unrecognized step type. Expected 'half', 'full', or 'wave'")
+            raise ValueError(f"Unrecognized step type {step_type}. Expected 'half', 'full', or 'wave'")
         self._spr = steps_per_rev # max # of steps in 1 revolution
         self._dps = degree_per_step # used to calculate angle
         self._step_type = step_type # can be 'wave', 'full', or 'half' for stepping pattern
@@ -81,9 +85,54 @@ class StepperMotor:
         self.reset0angle() # init self._steps = 0
         # self._steps = steps (specific to motor) for position tracking
         self._target_pos = 0
-        self._brake = False
         self._it = 0 # iterator for rotating stepper
+        self._end_delay_time = 0
+        self._brake = not IS_THREADED
         self._move_thread = None
+
+    @property
+    def is_changing(self):
+        """This attribute contains a `bool` indicating if the motor is in the midst of moving.
+            (read-only)
+
+        """
+        return self._target_pos != self._steps if self._target_pos is not None and self._move_thread is not None else False
+
+    def stop(self):
+        """Use this function when you want to abort any motion from the motor."""
+        if IS_THREADED:
+            self._stop_thread()
+        self._target_pos = self._steps
+
+    def _stop_thread(self):
+        self._brake = True
+        if self._move_thread is not None:
+            self._move_thread.join()
+        self._move_thread = None
+        self._brake = False
+
+    def _start_thread(self):
+        self._move_thread = Thread(target=self._move_steps)
+        self._move_thread.start()
+
+    def _move_steps(self):
+        do_while = True
+        while do_while:
+            self.tick()
+            do_while = not self._brake
+
+    def tick(self):
+        """This function should be used only once per main loop iteration. It will trigger stepping operations on the motor if needed."""
+        if self._steps != self._target_pos and time.monotonic() < self._end_delay_time:
+            # print(self._steps, '!=', self._target_pos)
+            # iterate self._steps
+            self._step()
+            # write to pins
+            self._write()
+            # wait a certain amount of time based on motor speed
+            self._end_delay_time = time.monotonic() + self._delay
+        else:
+            self._brake = True
 
     def reset0angle(self):
         """A calibrating function that will reset the motor's zero angle to its current position.
@@ -92,21 +141,9 @@ class StepperMotor:
             motor.
 
         """
-        self._brake = True
-        self._stop_thread()
-        self._steps = 0
-        self._target_pos = 0
-        self._brake = False
+        self.stop()
+        self._steps, self._target_pos = (0, 0)
 
-    def _step(self):
-        # increment or decrement step
-        if self._is_cw: # going CW
-            self._steps -= 1
-            self._it -= 1
-        else: # going CCW
-            self._steps += 1
-            self._it += 1
-        # now check for proper range according to stepper type
 
     def _wrap_it(self, maximum, minimum=0, theta=None):
         """
@@ -122,12 +159,23 @@ class StepperMotor:
 
     @property
     def _is_cw(self):
+        """determine the shortest route toward target position"""
         curr_pos = self._wrap_it(self._spr, 0, self._steps % self._spr)
         if curr_pos > self._target_pos:
             return curr_pos - self._target_pos < self._spr / 2
-        else: return self._target_pos - curr_pos > self._spr / 2
+        return self._target_pos - curr_pos > self._spr / 2
+
+    def _step(self):
+        """ increment or decrement _steps """
+        if self._is_cw: # going CW
+            self._steps -= 1
+            self._it -= 1
+        else: # going CCW
+            self._steps += 1
+            self._it += 1
 
     def _write(self):
+        """change pin states based on _steps iterator"""
         if self._step_type == "half":
             max_steps = 8
             self._it = self._wrap_it(max_steps)
@@ -155,44 +203,40 @@ class StepperMotor:
                     pin.value = True
                 else:
                     pin.value = False
-        else: # step_type specified is invalid
-            raise RuntimeError('Invalid Stepper Type = %s' % repr(self._step_type))
 
+    @property
     def _delay(self):
-        # delay between iterations based on motor speed (mm/sec)
-        time.sleep(self._rpm / 60000.0)
+        """time (in seconds) to delay between iterations based on motor's rpm attribute.
+        (read-only)
 
-    def _get_pin_bin(self):
+        """
+        return self._rpm / 60000.0
+
+    @property
+    def rpm(self):
+        """This `int` attribute contains the maximum Rotations Per Minute and can be changed at any
+        time.
+
+        """
+        return self._rpm
+
+    @rpm.setter
+    def rpm(self, val):
+        self._rpm = int(val)
+
+    @property
+    def _pin_bin(self):
+        """get all stepper's pin's boolean values as binary number where each bit represents a
+        pin
+
+        """
         pin_bin = 0b0
         for i in range(len(self._pins)):
             pin_bin = (pin_bin << 1) | int(self._pins[i].value)
         return pin_bin
 
     def __repr__(self):
-        return f'pins: {bin(self._get_pin_bin())} Angle: {self.angle} Steps: {self.steps} Value: {self.value}'
-
-    def _stop_thread(self):
-        if self._move_thread is not None:
-            self._move_thread.join()
-        self._move_thread = None
-
-    def _move_steps(self):
-        while self._target_pos is not None and self._steps != self._target_pos and not self._brake:
-            # print(self._steps, '!=', self._target_pos)
-            # iterate self._steps
-            self._step()
-            # write to pins
-            self._write()
-            # wait a certain amount of time based on motor speed
-            self._delay()
-
-    @property
-    def is_active(self):
-        """This attribute contains a `bool` indicating if the motor is in the midst of moving.
-            (read-only)
-
-        """
-        return self._target_pos != self._steps if self._target_pos is not None and self._move_thread is not None else False
+        return f'pins: {bin(self._pin_bin)} Angle: {self.angle} Steps: {self.steps} Value: {self.value}'
 
     @property
     def angle(self):
@@ -210,13 +254,13 @@ class StepperMotor:
         if val is None:
             self.reset0angle()
         else:
+            self.stop()
             self._target_pos = ceil(self._wrap_it(360, 0, val) / self._dps)
             # print('targetPos =', self._target_pos, 'curr_pos =', self.steps)
-            self._brake = True
-            self._stop_thread()
-            self._move_thread = Thread(target=self._move_steps)
-            self._brake = False
-            self._move_thread.start()
+            if IS_THREADED:
+                self._start_thread()
+            else:
+                self.tick()
 
     @property
     def steps(self):
@@ -234,13 +278,13 @@ class StepperMotor:
         if val is None:
             self.reset0angle()
         else:
+            self.stop()
             self._target_pos = self._wrap_it(self._spr, 0, val)
             # print('targetPos =', self._target_pos, 'curr_pos =', self.steps)
-            self._brake = True
-            self._stop_thread()
-            self._move_thread = Thread(target=self._move_steps)
-            self._brake = False
-            self._move_thread.start()
+            if IS_THREADED:
+                self._start_thread()
+            else:
+                self.tick()
 
     @property
     def value(self):
@@ -256,13 +300,13 @@ class StepperMotor:
         if val is None:
             self.reset0angle()
         else:
+            self.stop()
             self._target_pos = self._wrap_it(self._spr, 0, round(self._spr * max(-100.0, min(100.0, val)) / 200.0))
             # print('targetPos =', self._target_pos, 'curr_pos =', self.steps)
-            self._brake = True
-            self._stop_thread()
-            self._move_thread = Thread(target=self._move_steps)
-            self._brake = False
-            self._move_thread.start()
+            if IS_THREADED:
+                self._start_thread()
+            else:
+                self.tick()
 
     def __del__(self):
         for pin in self._pins:

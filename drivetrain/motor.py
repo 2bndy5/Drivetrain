@@ -28,16 +28,20 @@ A collection of driver classes for different single phase DC motors implementing
 
 """
 from math import pi as PI, cos
-from threading import Thread
 import time
 import serial
 from digitalio import DigitalInOut
+from busio import SPI
+from circuitpython_nrf24l01 import RF24
+IS_THREADED = True
+try:
+    from threading import Thread
+except ImportError:
+    IS_THREADED = False
 try:
     from pulseio import PWMOut
 except ImportError:
     from drivetrain.pwm.out import PWMOut
-from busio import SPI
-from circuitpython_nrf24l01 import RF24
 
 # pylint: disable=invalid-name,too-many-instance-attributes
 
@@ -72,21 +76,11 @@ class Solenoid:
         # variables used to track acceleration
         self._init_speed = 0
         self._target_speed = 0
-        self._start_smooth = 0
+        self._init_smooth = 0
         self._end_smooth = 0
-        self._smoothing_thread = None
-        self._cancel_thread = False
         self._dt = ramp_time
-
-    @property
-    def is_cellerating(self):
-        """This attribute contains a `bool` indicating if the motor's speed is in the midst of
-            changing. (read-only)
-
-        """
-        if self._smoothing_thread is not None and self._target_speed != self.value:
-            return True
-        return False
+        self._smoothing_thread = None
+        self._cancel_thread = not IS_THREADED
 
     @property
     def ramp_time(self):
@@ -108,6 +102,16 @@ class Solenoid:
     def ramp_time(self, delta_t):
         self._dt = abs(delta_t)
 
+    def stop(self):
+        """Use this function when you want to abort any motion from the motor."""
+        if IS_THREADED:
+            self._stop_thread()
+        self.value, self._target_speed = (0, 0)
+
+    def _start_thread(self):
+        self._smoothing_thread = Thread(target=self._smooth)
+        self._smoothing_thread.start()
+
     def _stop_thread(self):
         if self._smoothing_thread is not None:
             self._cancel_thread = True
@@ -116,12 +120,30 @@ class Solenoid:
         self._smoothing_thread = None
 
     def _smooth(self):
-        delta_time = int(time.monotonic() * 1000) - self._start_smooth
-        while delta_time < (self._end_smooth - self._start_smooth) and self._cancel_thread:
-            delta_speed = (1 - cos(delta_time / float(self._end_smooth - self._start_smooth) * PI)) / 2
+        do_while = True
+        while do_while:
+            self.tick()
+            do_while = not self._cancel_thread
+
+    def tick(self):
+        """This function should be used only once per main loop iteration. It will trigger the smoothing input operations on the output value if needed."""
+        time_i = int(time.monotonic() * 1000)
+        if time_i < self._end_smooth and self.value != self._target_speed and not type(self, Solenoid):
+            delta_speed = (1 - cos((time_i - self._init_smooth) / float(self._end_smooth - self._init_smooth) * PI)) / 2
             self.value = (delta_speed * (self._target_speed - self._init_speed) + self._init_speed)
-            delta_time = int(time.monotonic() * 1000) - self._start_smooth
-        self.value = self._target_speed
+        else:
+            self.value = self._target_speed
+            self._cancel_thread = True
+
+    @property
+    def is_cellerating(self):
+        """This attribute contains a `bool` indicating if the motor's speed is in the midst of
+            changing. (read-only)
+
+        """
+        if self._smoothing_thread is not None or self._target_speed != self.value:
+            return True
+        return False
 
     # let target_speed be the percentual target speed [-1,1]
     def cellerate(self, target_speed):
@@ -133,13 +155,15 @@ class Solenoid:
         """
         self._target_speed = max(-65535, min(65535, int(target_speed)))
         # integer of milliseconds
-        self._start_smooth = int(time.monotonic() * 1000)
+        self._init_smooth = int(time.monotonic() * 1000)
         self._init_speed = self.value
-        delta_t = abs((self._target_speed - self._init_speed) / 131070)
-        self._end_smooth = self._start_smooth + delta_t * self._dt
-        self._stop_thread()
-        self._smoothing_thread = Thread(target=self._smooth)
-        self._smoothing_thread.start()
+        delta_time = abs((self._target_speed - self._init_speed) / 131070)
+        self._end_smooth = self._init_smooth + delta_time * self.ramp_time
+        self.stop()
+        if IS_THREADED:
+            self._start_thread()
+        else:
+            self.tick()
 
     @property
     def value(self):

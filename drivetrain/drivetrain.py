@@ -30,10 +30,14 @@ configurations for the raspberry pi. Currently only supporting the R2D2 (aliased
 
 """
 # pylint: disable=arguments-differ,invalid-name
-from threading import Thread
 from digitalio import DigitalInOut
 from stepper import StepperMotor
 from motor import Solenoid, BiMotor, PhasedMotor, NRF24L01, USB
+IS_THREADED = True
+try:
+    from threading import Thread
+except ImportError:
+    IS_THREADED = False
 
 
 class Drivetrain:
@@ -49,13 +53,18 @@ class Drivetrain:
         self._motors = motors
         self._max_speed = max(0, min(max_speed, 100))
 
+    def tick(self):
+        """This function should be used only once per main loop iteration. It will trigger each motor's subsequent tick(), thus applying the smoothing input operations if needed."""
+        for motor in self._motors:
+            motor.tick()
+
     def _gogo(self, aux, init=2):
         """A helper function to the child classes to handle extra periphial motors attached to the
         `Drivetrain` object. This is only useful for motors that serve a specialized purpose
         other than propulsion.
 
-        :param list,tuple aux: A list or tuple of `int` motor input values to be passed in
-            corresponding order to the motors.
+        :param list,tuple aux: A `list` or `tuple` of `int` motor input values to be passed in
+            corresponding order to the motors. Each input value must be on range [-65535, 65535].
 
         :param int init: The index of the `list`/`tuple` of motor commends from which to start
             passing values to the corresponding motors.
@@ -64,7 +73,7 @@ class Drivetrain:
         if len(aux) > init:
             for i in range(init, len(aux)):
                 if i < len(self._motors):
-                    self._motors[i].value = aux[i] / 100.0
+                    self._motors[i].value = aux[i]
                 else:
                     print(f'motor[{i}] not declared and/or installed')
 
@@ -129,8 +138,8 @@ class Tank(Drivetrain):
             .. important:: Ordering of the motor inputs contained in this list/tuple matters. They
                 should correspond to the following order:
 
-                1. forward/reverse magnitude in range [-100, 100]
-                2. left/right magnitude in range [-100, 100]
+                1. forward/reverse magnitude in range [-65535, 65535]
+                2. left/right magnitude in range [-65535, 65535]
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
@@ -147,14 +156,14 @@ class Tank(Drivetrain):
         """
         if len(cmds) < 2:
             raise ValueError("the list/tuple of commands must be at least 2 items long")
-        cmds[0] = max(-100, min(100, int(cmds[0])))
-        cmds[1] = max(-100, min(100, int(cmds[1])))
+        cmds[0] = max(-65535, min(65535, int(cmds[0])))
+        cmds[1] = max(-65535, min(65535, int(cmds[1])))
         if cmds[1] > self._max_speed:
             cmds[1] = self._max_speed
         # assuming left/right axis is null (just going forward or backward)
         left = cmds[1]
         right = cmds[1]
-        if abs(cmds[0]) == 100:
+        if abs(cmds[0]) == 65535:
             # if forward/backward axis is null ("turning on a dime" functionality)
             if cmds[0] > self._max_speed:
                 cmds[0] = self._max_speed
@@ -162,7 +171,7 @@ class Tank(Drivetrain):
             left = cmds[0] * -1
         else:
             # if forward/backward axis is not null and left/right axis is not null
-            offset = (100 - abs(cmds[0])) / 100.0
+            offset = (65535 - abs(cmds[0])) / 65535.0
             if cmds[0] > 0:
                 right *= offset
             elif cmds[0] < 0:
@@ -209,8 +218,8 @@ class Automotive(Drivetrain):
             .. important:: Ordering of the motor inputs contained in this list/tuple matters. They
                 should correspond to the following order:
 
-                1. forward/reverse magnitude in range [-100, 100]
-                2. left/right magnitude in range [-100, 100]
+                1. forward/reverse magnitude in range [-65535, 65535]
+                2. left/right magnitude in range [-65535, 65535]
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
@@ -229,16 +238,16 @@ class Automotive(Drivetrain):
             raise ValueError(
                 "the list/tuple of commands must be at least 2 items long")
         # make sure speeds are an integer (not decimal/float)
-        cmds[0] = max(-100, min(100, int(cmds[0])))
-        cmds[1] = max(-100, min(100, int(cmds[1])))
+        cmds[0] = max(-65535, min(65535, int(cmds[0])))
+        cmds[1] = max(-65535, min(65535, int(cmds[1])))
         if cmds[1] > self._max_speed:
             cmds[1] = self._max_speed
         if smooth:
-            self._motors[0].cellerate(cmds[0] * 655.35)
-            self._motors[1].cellerate(cmds[1] * 655.35)
+            self._motors[0].cellerate(cmds[0])
+            self._motors[1].cellerate(cmds[1])
         else:
-            self._motors[0].value = cmds[0] * 655.35
-            self._motors[1].value = cmds[1] * 655.35
+            self._motors[0].value = cmds[0]
+            self._motors[1].value = cmds[1]
         self._gogo(cmds)
 
 
@@ -275,7 +284,7 @@ class External:
             library meant to act as a counterpart. Links and docs will be provided when stable
             enough for pre-release; please be patient and `stay tuned to this issue.
             <https://github.com/DVC-Viking-Robotics/Drivetrain/issues/3>`_
-        
+
         """
         self._interface.go(cmds)
 
@@ -305,25 +314,17 @@ class Locomotive(Drivetrain):
         self._switch = DigitalInOut(switch)
         self._switch.switch_to_input()
         self._is_forward = True
-        self._cancel_thread = False
+        self._is_in_motion = False
+        self._cancel_thread = not IS_THREADED
         self._moving_thread = None
-
-    def _move(self):
-        while not self._cancel_thread:
-            alternate = (1 if self._switch.value else -1) * \
-                (-1 if self._is_forward else 1)
-            self._motors[0].go(alternate)
-
-    @property
-    def is_cellerating(self):
-        """This attribute contains a `bool` indicating if the drivetrain's applied force via
-        solenoids is in the midst of alternating. (read-only)"""
-        if self._moving_thread is not None:
-            return True
-        return False
 
     def stop(self):
         """This function stops the process of alternating applied force between the solenoids."""
+        if IS_THREADED:
+            self._stop_thread()
+        self._is_in_motion = False
+
+    def _stop_thread(self):
         if self._moving_thread is not None:
             self._cancel_thread = True
             self._moving_thread.join()
@@ -345,6 +346,30 @@ class Locomotive(Drivetrain):
 
         """
         self._is_forward = forward
+        self._is_in_motion = True
         self.stop()
-        self._moving_thread = Thread(target=self._move)
-        self._moving_thread.start()
+        if IS_THREADED:
+            self._moving_thread = Thread(target=self._move)
+            self._moving_thread.start()
+        else:
+            self.tick()
+
+    def _move(self):
+        do_while = True
+        while do_while:
+            self.tick()
+            do_while = not self._cancel_thread
+
+    def tick(self):
+        """This function should be used only once per main loop iteration. It will trigger each motor's subsequent tick(), thus applying the smoothing input operations if needed."""
+        alternate = (1 if self._switch.value else -1) * \
+            (-1 if self._is_forward else 1)
+        self._motors[0].go(alternate)
+
+    @property
+    def is_cellerating(self):
+        """This attribute contains a `bool` indicating if the drivetrain's applied force via
+        solenoids is in the midst of alternating. (read-only)"""
+        if self._moving_thread is not None or self._is_in_motion:
+            return True
+        return False
