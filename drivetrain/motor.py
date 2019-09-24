@@ -30,9 +30,12 @@ A collection of driver classes for different single phase DC motors implementing
 from math import pi as PI, cos
 from threading import Thread
 import time
-import digitalio
-import pulseio
 import serial
+from digitalio import DigitalInOut
+try:
+    from pulseio import PWMOut
+except ImportError:
+    from drivetrain.pwm.out import PWMOut
 from busio import SPI
 from circuitpython_nrf24l01 import RF24
 
@@ -64,7 +67,7 @@ class Solenoid:
         for i, pin in enumerate(pins):
             if i >= 2:
                 break
-            self._signals.append(digitalio.DigitalInOut(pin))
+            self._signals.append(DigitalInOut(pin))
             self._signals[i].switch_to_output(False)
         # variables used to track acceleration
         self._init_speed = 0
@@ -209,7 +212,7 @@ class BiMotor(Solenoid):
         for pin in pins:
             if len(self._signals) == 2:
                 break
-            self._signals.append(pulseio.PWMOut(pin))
+            self._signals.append(PWMOut(pin))
 
     @property
     def value(self):
@@ -267,10 +270,10 @@ class PhasedMotor(Solenoid):
         self._signals[0].deinit()
         self._signals[1].deinit()
         self._signals.clear()
-        self._signals.append(pulseio.PWMOut(pins[0]))
+        self._signals.append(PWMOut(pins[0]))
         if len(pins) >= 1:
             # save direction signal pin # & set coresponding signal value to true
-            self._signals.append(digitalio.DigitalInOut(pins[1]))
+            self._signals.append(DigitalInOut(pins[1]))
             self._signals[1].switch_to_output(value=True)
 
     @property
@@ -321,8 +324,8 @@ class NRF24L01():
             raise ValueError('pins parameter must be a list of length 2 (CE and CSN respectively)')
         if not type(spi, SPI):
             raise ValueError('spi parameter must be an object of type busio.SPI')
-        pins[0] = digitalio.DigitalInOut(pins[0]) # CSN
-        pins[1] = digitalio.DigitalInOut(pins[1]) # CE
+        pins[0] = DigitalInOut(pins[0]) # CSN
+        pins[1] = DigitalInOut(pins[1]) # CE
         self._rf = RF24(spi, pins[0], pins[1])
         self._rf.open_tx_pipe(address)
         # self._rf.what_happened(1) # prints radio condition

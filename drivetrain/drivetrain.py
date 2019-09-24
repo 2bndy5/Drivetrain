@@ -32,16 +32,18 @@ configurations for the raspberry pi. Currently only supporting the R2D2 (aliased
 # pylint: disable=arguments-differ,invalid-name
 from threading import Thread
 from digitalio import DigitalInOut
-from .stepper import StepperMotor
-from .motor import Solenoid, BiMotor, PhasedMotor, NRF24L01, USB
+from stepper import StepperMotor
+from motor import Solenoid, BiMotor, PhasedMotor, NRF24L01, USB
 
 
 class Drivetrain:
     """A base class that is only used for inheriting various types of drivetrain configurations."""
+
     def __init__(self, motors, max_speed=100):
         for i, m in enumerate(motors):
             if not type(m, (Solenoid, BiMotor, PhasedMotor, StepperMotor)):
-                raise ValueError('unknown motor (index {}) of type {}'.format(i, type(m)))
+                raise ValueError(
+                    'unknown motor (index {}) of type {}'.format(i, type(m)))
         if not motors:
             raise ValueError('No motors were passed to the drivetrain.')
         self._motors = motors
@@ -93,6 +95,7 @@ class Drivetrain:
         self._motors.clear()
         del self._motors
 
+
 class Tank(Drivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
     are shared tasks. For example: R2D2 has 2 motors (1 in each leg -- the front retractable
@@ -108,6 +111,7 @@ class Tank(Drivetrain):
         it just limits the top speed that the forward/backward motion can go.
 
     """
+
     def __init__(self, motors, max_speed=100):
         if len(motors) != 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
@@ -171,6 +175,7 @@ class Tank(Drivetrain):
             self._motors[1].value = right * 655.35
         self._gogo(cmds)
 
+
 class Automotive(Drivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
     are separate tasks. The first motor is used to steer, and the second motor is used to
@@ -186,6 +191,7 @@ class Automotive(Drivetrain):
         it just limits the top speed that the forward/backward motion can go.
 
     """
+
     def __init__(self, motors, max_speed=100):
         if len(motors) != 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
@@ -220,7 +226,8 @@ class Automotive(Drivetrain):
 
         """
         if len(cmds) < 2:
-            raise ValueError("the list/tuple of commands must be at least 2 items long")
+            raise ValueError(
+                "the list/tuple of commands must be at least 2 items long")
         # make sure speeds are an integer (not decimal/float)
         cmds[0] = max(-100, min(100, int(cmds[0])))
         cmds[1] = max(-100, min(100, int(cmds[1])))
@@ -233,6 +240,7 @@ class Automotive(Drivetrain):
             self._motors[0].value = cmds[0] * 655.35
             self._motors[1].value = cmds[1] * 655.35
         self._gogo(cmds)
+
 
 class External:
     """A class to be used for controlling drivetrains not physically attached to the host
@@ -249,11 +257,13 @@ class External:
         nothing has been finalized yet.
 
     """
+
     def __init__(self, interface):
         if type(interface, (USB, NRF24L01)):
             self._interface = interface
         else:
-            raise ValueError('The "External" drivetrain class only supports interfaces of type class USB or NRF24L01')
+            raise ValueError('The "External" drivetrain class only supports interfaces of type'
+                             ' class USB or NRF24L01')
         self._last_cmds = []
 
     def go(self, cmds):
@@ -265,8 +275,10 @@ class External:
             library meant to act as a counterpart. Links and docs will be provided when stable
             enough for pre-release; please be patient and `stay tuned to this issue.
             <https://github.com/DVC-Viking-Robotics/Drivetrain/issues/3>`_
+        
         """
         self._interface.go(cmds)
+
 
 class Locomotive(Drivetrain):
     """This class relies soley on one `Solenoid` object controlling 2 solenoids in tandem. Like
@@ -287,6 +299,7 @@ class Locomotive(Drivetrain):
         controlling a shaft's extension/retraction. This may change when we support servos though.
 
     """
+
     def __init__(self, solenoids, switch):
         super(Locomotive, self).__init__([solenoids])
         self._switch = DigitalInOut(switch)
@@ -297,7 +310,8 @@ class Locomotive(Drivetrain):
 
     def _move(self):
         while not self._cancel_thread:
-            alternate = (1 if self._switch.value else -1) * (-1 if self._is_forward else 1)
+            alternate = (1 if self._switch.value else -1) * \
+                (-1 if self._is_forward else 1)
             self._motors[0].go(alternate)
 
     @property
