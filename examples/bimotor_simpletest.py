@@ -18,7 +18,7 @@ for test in Value:
     start = time.monotonic()
     t = start
     # do a no delay wait for at least 3 seconds
-    while motor.is_cellerating or t < start + 3:
+    while motor.value != int(test) or t < start + 3:
         t = time.monotonic()
         # avoid infinite looping via a hard timeout of 6 seconds
         if t > start + 6: # something went wrong; abort!
