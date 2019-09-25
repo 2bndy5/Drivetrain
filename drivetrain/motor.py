@@ -123,13 +123,13 @@ class Solenoid:
     def tick(self):
         """This function should be used only once per main loop iteration. It will trigger the smoothing input operations on the output value if needed."""
         time_i = int(time.monotonic() * 1000)
-        print(f'target speed: {self._target_speed}, init speed: {self._init_speed}')
-        print(f'time_i: {time_i}')
-        print(f'end smoothing: {self._end_smooth}, init smooth: {self._init_smooth}')
+        # print(f'target speed: {self._target_speed}, init speed: {self._init_speed}')
+        # print(f'time_i: {time_i}')
+        # print(f'end smoothing: {self._end_smooth}, init smooth: {self._init_smooth}')
         if time_i < self._end_smooth and self.value != self._target_speed: # and type(self) is not Solenoid
             delta_speed = (1 - cos((time_i - self._init_smooth) / float(self._end_smooth - self._init_smooth) * PI)) / 2
             self.value = int(delta_speed * (self._target_speed - self._init_speed) + self._init_speed)
-            print(f'delta speed: {delta_speed}')
+            # print(f'delta speed: {delta_speed}')
         else:
             print('done changing speed')
             self.value = self._target_speed
