@@ -112,6 +112,7 @@ class Solenoid:
             self._cancel_thread = True
             self._smoothing_thread.join(0.01) # 10 millisecond timeout
             self._cancel_thread = False
+            del self._smoothing_thread
         self._smoothing_thread = None
 
     def _smooth(self):
