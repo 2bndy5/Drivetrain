@@ -168,7 +168,6 @@ class Solenoid:
         delta_time = abs((self._target_speed - self._init_speed) / 131070)
         # print(f'dt calculated: {delta_time}')
         self._end_smooth = int(self._init_smooth + delta_time * self.ramp_time)
-        # print(f'started smoothing @ {self._init_smooth}, ending smooth @ {self._end_smooth}')
         if IS_THREADED:
             self._start_thread()
         else:
@@ -206,7 +205,6 @@ class Solenoid:
             self._signals[0] = False
             if len(self._signals) > 1:
                 self._signals[1] = False
-        self._target_speed = val
 
     def __del__(self):
         self._cancel_thread = False
@@ -274,7 +272,6 @@ class BiMotor(Solenoid):
             self._signals[0].duty_cycle = 0
             if len(self._signals) > 1:
                 self._signals[1].duty_cycle = 0
-        self._target_speed = val
 # end BiMotor child class
 
 
@@ -337,7 +334,6 @@ class PhasedMotor(Solenoid):
             self._signals[0].duty_cycle = 0
             if len(self._signals) > 1:
                 self._signals[1] = True
-        self._target_speed = val
 # end PhasedMotor child class
 
 class NRF24L01():
