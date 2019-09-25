@@ -103,8 +103,8 @@ class Solenoid:
         self._dt = abs(delta_t)
 
     def _start_thread(self):
-        # if self._smoothing_thread is None:
-        self._smoothing_thread = Thread(target=self._smooth)
+        if self._smoothing_thread is None:
+            self._smoothing_thread = Thread(target=self._smooth)
         self._smoothing_thread.start()
 
     def _stop_thread(self):
@@ -112,8 +112,6 @@ class Solenoid:
             self._cancel_thread = True
             self._smoothing_thread.join(0.01) # 10 millisecond timeout
             self._cancel_thread = False
-            del self._smoothing_thread
-        self._smoothing_thread = None
 
     def _smooth(self):
         while not self._cancel_thread:
