@@ -362,7 +362,9 @@ class Locomotive(Drivetrain):
             do_while = not self._cancel_thread
 
     def tick(self):
-        """This function should be used at least once per main loop iteration. It will triggerthe alternating of each solenoid's applied force. This IS needed on MCUs (microcontroller units) that can't use the threading module."""
+        """This function should be used at least once in the application's main loop. It will
+        trigger the alternating of each solenoid's applied force. This IS needed on MCUs
+        (microcontroller units) that can't use the threading module."""
         alternate = (1 if self._switch.value else -1) * \
             (-1 if self._is_forward else 1)
         self._motors[0].go(alternate)
