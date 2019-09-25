@@ -20,4 +20,8 @@ for test in Value:
     # do a no delay wait for at least 3 seconds
     while motor.is_cellerating or t < start + 3:
         t = time.monotonic()
-    print(f'test command {int(test * 655.35)} took {time.monotonic()-start} seconds')
+    print(f'test result {motor.value} took {time.monotonic()-start} seconds')
+
+for test in Value:
+    motor.value = test * 655.35
+    time.sleep(2)
