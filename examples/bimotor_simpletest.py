@@ -7,7 +7,7 @@ and prints the ellapsed time taken to acheive each command
 # pylint: disable=invalid-name
 import time
 import board
-from drivetrain.motor import BiMotor
+from drivetrain import BiMotor
 
 motor = BiMotor([board.D22, board.D13], ramp_time=2000)
 Value = [-25, 25, -100, 100, 0]
@@ -18,9 +18,6 @@ for test in Value:
     start = time.monotonic()
     t = start
     # do a no delay wait for at least 3 seconds
-    while motor.value != int(test) or t < start + 3:
+    while motor.value != int(test * 655.35) and t < start + 3:
         t = time.monotonic()
-        # avoid infinite looping via a hard timeout of 6 seconds
-        if t > start + 6: # something went wrong; abort!
-            break
     print(f'test command {test * 655.35} took {time.monotonic()-start} seconds')
