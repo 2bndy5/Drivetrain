@@ -103,14 +103,15 @@ class Solenoid:
         self._dt = abs(delta_t)
 
     def _start_thread(self):
-        if self._smoothing_thread is None:
-            self._smoothing_thread = Thread(target=self._smooth)
+        if self._smoothing_thread is not None:
+            self._stop_thread()
+        self._smoothing_thread = Thread(target=self._smooth)
         self._smoothing_thread.start()
 
     def _stop_thread(self):
         if self._smoothing_thread is not None:
             self._cancel_thread = True
-            self._smoothing_thread.join(0.01) # 10 millisecond timeout
+            self._smoothing_thread.join()
             self._cancel_thread = False
 
     def _smooth(self):
@@ -149,12 +150,11 @@ class Solenoid:
     def cellerate(self, target_speed):
         """A function to smoothly accelerate/decelerate the motor to a specified target speed.
 
-        :param int target_speed: The desired target speed in range of [-65534, 65535]. Any invalid
+        :param int target_speed: The desired target speed in range of [-65535, 65535]. Any invalid
             inputs will be clamped to an `int` value in the proper range.
 
         """
-        self._stop_thread()
-        self._target_speed = max(-65534, min(65535, int(target_speed)))
+        self._target_speed = max(-65535, min(65535, int(target_speed)))
         # integer of milliseconds
         self._init_smooth = int(time.monotonic() * 1000)
         self._init_speed = self.value
@@ -242,14 +242,14 @@ class BiMotor(Solenoid):
     @property
     def value(self):
         """This attribute contains the current output value of the solenoid(s) in range
-        [-65534, 65535]. An invalid input value will be clamped to an `int` in the proper range.
+        [-65535, 65535]. An invalid input value will be clamped to an `int` in the proper range.
         A negative value represents the motor's speed in reverse rotation. A positive value
         reprsents the motor's speed in forward rotation."""
         return self._signals[0].duty_cycle - (self._signals[1].duty_cycle if len(self._signals) > 1 else 0)
 
     @value.setter
     def value(self, val):
-        val = max(-65534, min(65535, int(val)))
+        val = max(-65535, min(65535, int(val)))
         # going forward
         if val > 0:
             self._signals[0].duty_cycle = val
@@ -304,14 +304,14 @@ class PhasedMotor(Solenoid):
     @property
     def value(self):
         """This attribute contains the current output value of the solenoid(s) in range
-        [-65534, 65535]. An invalid input value will be clamped to an `int` in the proper range.
+        [-65535, 65535]. An invalid input value will be clamped to an `int` in the proper range.
         A negative value represents the motor's speed in reverse rotation. A positive value
         reprsents the motor's speed in forward rotation."""
         return self._signals[0].duty_cycle * (1 if self._signals[1].value else -1)
 
     @value.setter
     def value(self, val):
-        val = max(-65534, min(65535, int(val)))
+        val = max(-65535, min(65535, int(val)))
         # going forward
         if val > 0:
             self._signals[0].duty_cycle = val
