@@ -18,10 +18,6 @@ for test in Value:
     start = time.monotonic()
     t = start
     # do a no delay wait for at least 3 seconds
-    while motor.is_cellerating or t < start + 3:
+    while motor.is_cellerating and t < start + 3:
         t = time.monotonic()
     print(f'test result {motor.value} took {time.monotonic()-start} seconds')
-
-for test in Value:
-    motor.value = test * 655.35
-    time.sleep(2)
