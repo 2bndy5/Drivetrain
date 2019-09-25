@@ -106,7 +106,7 @@ class Solenoid:
         """Use this function when you want to abort any motion from the motor."""
         if IS_THREADED:
             self._stop_thread()
-        self.value, self._target_speed = (0, 0)
+        self._target_speed = self.value
 
     def _start_thread(self):
         self._smoothing_thread = Thread(target=self._smooth)
@@ -141,7 +141,9 @@ class Solenoid:
             changing. (read-only)
 
         """
-        if self._smoothing_thread is not None or self._target_speed != self.value:
+        if self._smoothing_thread is not None:
+            return self._smoothing_thread.is_alive()
+        if self._target_speed != self.value:
             return True
         return False
 
@@ -153,6 +155,7 @@ class Solenoid:
             inputs will be clamped to an `int` value in the proper range.
 
         """
+        self.stop()
         self._target_speed = max(-65535, min(65535, int(target_speed)))
         # print(f'target speed = {self._target_speed} from input {target_speed}')
         # integer of milliseconds
@@ -162,12 +165,9 @@ class Solenoid:
         # print(f'dt calculated: {delta_time}')
         self._end_smooth = self._init_smooth + delta_time * self.ramp_time
         # print(f'started smoothing @ {self._init_smooth}, ending smooth @ {self._end_smooth}')
-        self.stop()
         if IS_THREADED:
-            print('thread invoked')
             self._start_thread()
         else:
-            print('not using threads')
             self.tick()
 
     @property
