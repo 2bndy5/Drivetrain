@@ -143,9 +143,7 @@ class Solenoid:
         """
         if self._smoothing_thread is not None:
             return self._smoothing_thread.is_alive()
-        if self._target_speed != self.value:
-            return True
-        return False
+        return self._target_speed != self.value
 
     # let target_speed be the percentual target speed [-1,1]
     def cellerate(self, target_speed):
@@ -202,6 +200,7 @@ class Solenoid:
             self._signals[0] = False
             if len(self._signals) > 1:
                 self._signals[1] = False
+        self._target_speed = val
 
     def __del__(self):
         self._cancel_thread = False
@@ -269,6 +268,7 @@ class BiMotor(Solenoid):
             self._signals[0].duty_cycle = 0
             if len(self._signals) > 1:
                 self._signals[1].duty_cycle = 0
+        self._target_speed = val
 # end BiMotor child class
 
 
@@ -331,6 +331,7 @@ class PhasedMotor(Solenoid):
             self._signals[0].duty_cycle = 0
             if len(self._signals) > 1:
                 self._signals[1] = True
+        self._target_speed = val
 # end PhasedMotor child class
 
 class NRF24L01():

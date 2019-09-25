@@ -54,6 +54,7 @@ class PWMOut:
         self._pin.ChangeFrequency(val)
 
     def deinit(self):
+        """de-initialize the pin for future instantiation."""
         self._pin.stop()
         GPIO.cleanup(self._pin_number) # make sure to deinit pin from any previous unresolved usage
 
