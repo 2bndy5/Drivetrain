@@ -39,7 +39,6 @@ try:
 except ImportError:
     IS_THREADED = False
 
-
 class Drivetrain:
     """A base class that is only used for inheriting various types of drivetrain configurations."""
 
