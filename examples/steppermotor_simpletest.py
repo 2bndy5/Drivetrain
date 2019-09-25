@@ -14,11 +14,11 @@ for test in Value:
     start = time.monotonic()
     t = start
     end = None
-    while motor.is_active or t < start + 2:
+    while motor.is_changing or t < start + 2:
         t = time.monotonic()
-        if not motor.is_active and end is None:
+        if not motor.is_changing and end is None:
             end = t
             print(repr(motor))
             print('value acheived in', end-start, 'seconds')
-        # elif motor.is_active:
+        # elif motor.is_changing:
         #     print(repr(motor))

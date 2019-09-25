@@ -14,10 +14,12 @@ Value = [-25, 25, -100, 100, 0]
 for test in Value:
     # send input instructions
     # NOTE we convert the percentage value to range [-65535, 65535]
-    motor.cellerate = test * 655.35
+    motor.cellerate(test * 655.35)
     start = time.monotonic()
     t = start
     # do a no delay wait for at least 3 seconds
-    while t < start + 3:
-        pass
+    while motor.is_cellerating or t < start + 3:
+        # avoid infinite looping via a hard timeout of 6 seconds
+        if t > start + 6: # something went wrong; abort!
+            break
     print(f'test command {test * 655.35} took {time.monotonic()-start} seconds')
