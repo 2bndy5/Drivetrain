@@ -120,20 +120,20 @@ class Solenoid:
         self._smoothing_thread = None
 
     def _smooth(self):
-        do_while = True
-        while do_while:
+        while not self._cancel_thread:
             self.tick()
-            do_while = not self._cancel_thread
 
+    # pylint: disable=unidiomatic-typecheck
     def tick(self):
         """This function should be used only once per main loop iteration. It will trigger the smoothing input operations on the output value if needed."""
         time_i = int(time.monotonic() * 1000)
-        if time_i < self._end_smooth and self.value != self._target_speed and not type(self, Solenoid):
+        if time_i < self._end_smooth and self.value != self._target_speed and type(self) is not Solenoid:
             delta_speed = (1 - cos((time_i - self._init_smooth) / float(self._end_smooth - self._init_smooth) * PI)) / 2
             self.value = (delta_speed * (self._target_speed - self._init_speed) + self._init_speed)
         else:
             self.value = self._target_speed
             self._cancel_thread = True
+    # pylint: enable=unidiomatic-typecheck
 
     @property
     def is_cellerating(self):
@@ -154,14 +154,14 @@ class Solenoid:
 
         """
         self._target_speed = max(-65535, min(65535, int(target_speed)))
-        print(f'target speed = {self._target_speed} from input {target_speed}')
+        # print(f'target speed = {self._target_speed} from input {target_speed}')
         # integer of milliseconds
         self._init_smooth = int(time.monotonic() * 1000)
         self._init_speed = self.value
         delta_time = abs((self._target_speed - self._init_speed) / 131070)
-        print(f'dt calculated: {delta_time}')
+        # print(f'dt calculated: {delta_time}')
         self._end_smooth = self._init_smooth + delta_time * self.ramp_time
-        print(f'started smoothing @ {self._init_smooth}, ending smooth @ {self._end_smooth}')
+        # print(f'started smoothing @ {self._init_smooth}, ending smooth @ {self._end_smooth}')
         self.stop()
         if IS_THREADED:
             print('thread invoked')
