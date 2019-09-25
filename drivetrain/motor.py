@@ -123,6 +123,7 @@ class Solenoid:
     def _smooth(self):
         while not self._cancel_thread:
             self.tick()
+            print(self.value)
 
     # pylint: disable=unidiomatic-typecheck
     def tick(self):
@@ -131,7 +132,7 @@ class Solenoid:
         print(f'target speed: {self._target_speed}, init speed: {self._init_speed}')
         print(f'time_i: {time_i}')
         print(f'end smoothing: {self._end_smooth}, init smooth: {self._init_smooth}')
-        if time_i < self._end_smooth and self.value != self._target_speed and type(self) is not Solenoid:
+        if time_i < self._end_smooth and self.value != self._target_speed: # and type(self) is not Solenoid
             delta_speed = (1 - cos((time_i - self._init_smooth) / float(self._end_smooth - self._init_smooth) * PI)) / 2
             self.value = (delta_speed * (self._target_speed - self._init_speed) + self._init_speed)
         else:
@@ -164,7 +165,7 @@ class Solenoid:
         self._init_speed = self.value
         delta_time = abs((self._target_speed - self._init_speed) / 131070)
         # print(f'dt calculated: {delta_time}')
-        self._end_smooth = self._init_smooth + delta_time * self.ramp_time
+        self._end_smooth = int(self._init_smooth + delta_time * self.ramp_time)
         # print(f'started smoothing @ {self._init_smooth}, ending smooth @ {self._end_smooth}')
         if IS_THREADED:
             self._start_thread()
