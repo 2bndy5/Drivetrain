@@ -102,12 +102,6 @@ class Solenoid:
     def ramp_time(self, delta_t):
         self._dt = abs(delta_t)
 
-    def stop(self):
-        """Use this function when you want to abort any motion from the motor."""
-        if IS_THREADED:
-            self._stop_thread()
-        self._target_speed, self.value = (0, 0)
-
     def _start_thread(self):
         # if self._smoothing_thread is None:
         self._smoothing_thread = Thread(target=self._smooth)
@@ -160,7 +154,7 @@ class Solenoid:
             inputs will be clamped to an `int` value in the proper range.
 
         """
-        self.stop()
+        self._stop_thread()
         self._target_speed = max(-65534, min(65535, int(target_speed)))
         # integer of milliseconds
         self._init_smooth = int(time.monotonic() * 1000)
