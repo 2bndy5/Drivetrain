@@ -4,6 +4,7 @@
 .. If your library file(s) are nested in a directory (e.g. /adafruit_foo/foo.py)
 .. use this format as the module name: "adafruit_foo.foo"
 
+.. important:: Other motor libraries have implemented the "DC braking" concept in which all coils of the motor are energized to lock the rotor in place using simultaneously opposing electromagnetic forces. Unlike other motor libraries, we DO NOT assume your motors' driver circuit contains a flyback diodes to protect its transistors (even though they are highly recommended due to `Lenz's Law <https://en.wikipedia.org/wiki/Lenz%27s_law>`_).  Therefore, passing a desired speed of ``0`` to the `cellerate()` or `go()` functions of the drivetrain and motor objects will effectively de-energize the coils in the motors.
 
 Tank Drivetrain
 ----------------
