@@ -53,7 +53,9 @@ class Drivetrain:
         self._max_speed = max(0, min(max_speed, 100))
 
     def tick(self):
-        """This function should be used only once per main loop iteration. It will trigger each motor's subsequent tick(), thus applying the smoothing input operations if needed."""
+        """This function should be used at least once per main loop iteration. It will trigger each
+        motor's subsequent tick(), thus applying the smoothing input operations if needed. This is
+        not needed if the smoothing algorithms are not utilized/necessary in the application"""
         for motor in self._motors:
             motor.tick()
 
@@ -360,7 +362,7 @@ class Locomotive(Drivetrain):
             do_while = not self._cancel_thread
 
     def tick(self):
-        """This function should be used only once per main loop iteration. It will trigger each motor's subsequent tick(), thus applying the smoothing input operations if needed."""
+        """This function should be used at least once per main loop iteration. It will triggerthe alternating of each solenoid's applied force. This IS needed on MCUs (microcontroller units) that can't use the threading module."""
         alternate = (1 if self._switch.value else -1) * \
             (-1 if self._is_forward else 1)
         self._motors[0].go(alternate)

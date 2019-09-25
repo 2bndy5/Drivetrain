@@ -5,12 +5,16 @@
 Introduction
 ============
 
-A collection of motor drivers classes and specialized drivetrain classes to coordinate the motors' objects in generic configurations. This takes advatage of the threading module for smoothing motor input commands in background running threads. This was developed for & tested on the Raspberry PI.
+A collection of motor drivers classes and specialized drivetrain classes to coordinate the motors' objects in generic configurations. This takes advatage of the threading module for smoothing motor input commands in background running threads. This was developed for & tested on the Raspberry PI. For running this library on CicuitPython devices (that don't have access to the threading module) like the Adafruit ItsyBitsy M4, we have added a fallback function called "tick()" that should get called at least once in the application's main loop.
 
 Dependencies
 ============
 
-This library requires the `digitalio` and `pulseio` modules from the `adafruit-blinka Library <https://pypi.org/project/Adafruit-Blinka/>`_
+This library requires
+
+    * the `digitalio` and `pulseio` modules from the `adafruit-blinka Library <https://pypi.org/project/Adafruit-Blinka/>`_
+    * for serial communications: `pyserial <https://pypi.org/project/pyserial/>`_
+    * and for using the nRF24L01 as an interface: `circuitpython-nrf24l01 <https://pypi.org/project/circuitpython-nrf24l01/>`_
 
 Installation
 ============
@@ -27,13 +31,7 @@ You can easily install this library to your Raspberry Pi in the terminal using t
 
 Some cases may require the last command be prefixed with ``sudo`` or appended with ``--user``.
 
-Installing this library should also automatically install the `adafruit-blinka library <https://pypi.org/project/Adafruit-Blinka/>`_, but if you run into an import error related to the digitalio or pulseio modules, make sure the `adafruit-blinka library <https://pypi.org/project/Adafruit-Blinka/>`_ is install via:
-
-.. code-block:: shell
-
-    pip3 install adfruit-blinka
-
-Again, some cases may require the command be prefixed with ``sudo`` or appended with ``--user``.
+Installing this library should also automatically install the dependencies listed above (platform permitting).
 
 Examples
 ===========

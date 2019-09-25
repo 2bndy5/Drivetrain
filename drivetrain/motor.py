@@ -123,7 +123,9 @@ class Solenoid:
 
     # pylint: disable=unidiomatic-typecheck
     def tick(self):
-        """This function should be used only once per main loop iteration. It will trigger the smoothing input operations on the output value if needed."""
+        """This function should be used at least in the application's main loop iteration. It will
+        trigger the smoothing input operations on the output value if needed. This is not needed if
+        the smoothing algorithms are not utilized/necessary in the application"""
         time_i = int(time.monotonic() * 1000)
         # print(f'target speed: {self._target_speed}, init speed: {self._init_speed}')
         # print(f'time_i: {time_i}')
