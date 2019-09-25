@@ -1,1 +1,3 @@
 Adafruit-Blinka
+circuitpython-nrf24l01
+RPi.GPIO
