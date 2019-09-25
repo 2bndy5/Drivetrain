@@ -41,7 +41,7 @@ except ImportError:
 try:
     from pulseio import PWMOut
 except ImportError:
-    from .pwm.out import PWMOut
+    from .pwm import PWMOut
 
 # pylint: disable=invalid-name,too-many-instance-attributes
 
