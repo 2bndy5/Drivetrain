@@ -154,15 +154,20 @@ class Solenoid:
 
         """
         self._target_speed = max(-65535, min(65535, int(target_speed)))
+        print(f'target speed = {self._target_speed} from input {target_speed}')
         # integer of milliseconds
         self._init_smooth = int(time.monotonic() * 1000)
         self._init_speed = self.value
         delta_time = abs((self._target_speed - self._init_speed) / 131070)
+        print(f'dt calculated: {delta_time}')
         self._end_smooth = self._init_smooth + delta_time * self.ramp_time
+        print(f'started smoothing @ {self._init_smooth}, ending smooth @ {self._end_smooth}')
         self.stop()
         if IS_THREADED:
+            print('thread invoked')
             self._start_thread()
         else:
+            print('not using threads')
             self.tick()
 
     @property
