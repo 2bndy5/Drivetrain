@@ -118,6 +118,8 @@ class Solenoid:
         while not self._cancel_thread:
             self.tick()
             # print(f'current speed: {self.value}, thread is alive: {self._smoothing_thread.is_alive()}')
+            if self._cancel_thread:
+                break
 
     # pylint: disable=unidiomatic-typecheck
     def tick(self):

@@ -18,6 +18,6 @@ for test in Value:
     start = time.monotonic()
     t = start
     # do a no delay wait for at least 3 seconds
-    while motor.value != int(test * 655.35) and t < start + 3:
+    while motor.is_cellerating and t < start + 3:
         t = time.monotonic()
     print(f'test command {test * 655.35} took {time.monotonic()-start} seconds')
