@@ -134,7 +134,7 @@ class Solenoid:
         print(f'end smoothing: {self._end_smooth}, init smooth: {self._init_smooth}')
         if time_i < self._end_smooth and self.value != self._target_speed: # and type(self) is not Solenoid
             delta_speed = (1 - cos((time_i - self._init_smooth) / float(self._end_smooth - self._init_smooth) * PI)) / 2
-            self.value = (delta_speed * (self._target_speed - self._init_speed) + self._init_speed)
+            self.value = int(delta_speed * (self._target_speed - self._init_speed) + self._init_speed)
             print(f'delta speed: {delta_speed}')
         else:
             print('done changing speed')
