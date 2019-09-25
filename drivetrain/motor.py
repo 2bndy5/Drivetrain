@@ -110,7 +110,7 @@ class Solenoid:
     def _stop_thread(self):
         if self._smoothing_thread is not None:
             self._cancel_thread = True
-            self._smoothing_thread.join()
+            self._smoothing_thread.join(0.01) # 10 millisecond timeout
             self._cancel_thread = False
         self._smoothing_thread = None
 
@@ -133,7 +133,7 @@ class Solenoid:
         else:
             print('done changing speed')
             self.value = self._target_speed
-            self._stop_thread()
+            self._cancel_thread = True
     # pylint: enable=unidiomatic-typecheck
 
     @property
