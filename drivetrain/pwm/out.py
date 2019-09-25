@@ -1,5 +1,5 @@
 """PWMOut class as an alternative to circuitpython's pulseio.PWMOut due to lack of support on the
-Raspberry Pi and the Jetson""" 
+Raspberry Pi and the Jetson"""
 # pylint: disable=import-error
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
@@ -30,7 +30,7 @@ class PWMOut:
         self._frequency = int(freq)
         self._pin = GPIO.PWM(self._pin_number, self._frequency)
         self._duty_cycle = int(duty_cycle)
-        self._pin.start(self._duty_cycle * 655.35)
+        self._pin.start(self._duty_cycle / 655.35)
 
     @property
     def duty_cycle(self):
@@ -41,18 +41,18 @@ class PWMOut:
     def duty_cycle(self, val):
         val = max(0, min(65535, int(val)))
         self._duty_cycle = val
-        self._pin.ChangeDutyCycle(val * 655.35)
+        self._pin.ChangeDutyCycle(val / 655.35)
 
     @property
     def frequency(self):
         """The `int` value of the pin's current (approximated) PWM frequency."""
         return self._frequency
-    
+
     @frequency.setter
     def frequency(self, val):
         self._frequency = val
         self._pin.ChangeFrequency(val)
-    
+
     def deinit(self):
         self._pin.stop()
         GPIO.cleanup(self._pin_number) # make sure to deinit pin from any previous unresolved usage
