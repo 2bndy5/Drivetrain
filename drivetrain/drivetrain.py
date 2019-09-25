@@ -59,6 +59,13 @@ class Drivetrain:
         for motor in self._motors:
             motor.tick()
 
+    def stop(self):
+        """This function will stop all motion in the drivetrain's motors"""
+        commands = []
+        for _ in self._motors:
+            commands.append(0)
+        self._gogo(commands, 0)
+
     def _gogo(self, aux, init=2):
         """A helper function to the child classes to handle extra periphial motors attached to the
         `Drivetrain` object. This is only useful for motors that serve a specialized purpose
@@ -96,10 +103,13 @@ class Drivetrain:
     def max_speed(self, val):
         self._max_speed = max(0, min(val if val is not None else 0, 100))
 
-    def print(self):
-        """Prints all the motors current values."""
+    def __repr__(self):
+        """Aggregates all the motors current values into a printable string."""
+        output = ''
         for i, m in self._motors:
-            print(f'motor {i} value = {m.value}')
+            output += f'motor {i} value = {m.value}'
+            if i != len(self._motors) - 1:
+                output += ','
 
     def __del__(self):
         self._motors.clear()
