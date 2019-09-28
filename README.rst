@@ -5,7 +5,7 @@
 Introduction
 ============
 
-A collection of motor drivers classes and specialized drivetrain classes to coordinate the motors' objects in generic configurations. This takes advatage of the threading module for smoothing motor input commands in background running threads. This was developed for & tested on the Raspberry PI. For running this library on CicuitPython devices (that don't have access to the threading module) like the Adafruit ItsyBitsy M4, we have added a fallback function called "tick()" that should get called at least once in the application's main loop.
+A collection of motor drivers classes and specialized drivetrain classes to coordinate the motors' objects in generic configurations. This takes advatage of the threading module for smoothing motor input commands in background running threads. This was developed for & tested on the Raspberry PI. For running this library on CicuitPython devices (that don't have access to the threading module) like the Adafruit ItsyBitsy M4, we have added a fallback function called "synch()" that should get called at least once in the application's main loop.
 
 Dependencies
 ============

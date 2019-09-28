@@ -116,13 +116,13 @@ class Solenoid:
 
     def _smooth(self):
         while not self._cancel_thread:
-            self.tick()
+            self.synch()
             # print(f'current speed: {self.value}, thread is alive: {self._smoothing_thread.is_alive()}')
             if self._cancel_thread:
                 break
 
     # pylint: disable=unidiomatic-typecheck
-    def tick(self):
+    def synch(self):
         """This function should be used at least in the application's main loop iteration. It will
         trigger the smoothing input operations on the output value if needed. This is not needed if
         the smoothing algorithms are not utilized/necessary in the application"""
@@ -168,7 +168,7 @@ class Solenoid:
         if IS_THREADED:
             self._start_thread()
         else:
-            self.tick()
+            self.synch()
 
     @property
     def value(self):
