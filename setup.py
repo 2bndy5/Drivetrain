@@ -35,7 +35,6 @@ setup(
         'adafruit-blinka',
         'pyserial',
         'circuitpython-nrf24l01',
-        'RPi.GPIO'
     ],
 
     # Choose your license
