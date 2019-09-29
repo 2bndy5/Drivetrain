@@ -349,13 +349,13 @@ class NRF24L01():
 
     """
     def __init__(self, spi, pins, address=b'rfpi0'):
-        if not type(pins, list) and len(pins) != 2:
+        if type(pins) not in (list, tuple) and len(pins) != 2:
             raise ValueError('pins parameter must be a list of length 2 (CE and CSN respectively)')
-        if not type(spi, SPI):
+        if type(spi) not in (SPI,):
             raise ValueError('spi parameter must be an object of type busio.SPI')
-        pins[0] = DigitalInOut(pins[0]) # CSN
-        pins[1] = DigitalInOut(pins[1]) # CE
-        self._rf = RF24(spi, pins[0], pins[1])
+        csn = DigitalInOut(pins[0]) # CSN
+        ce = DigitalInOut(pins[1]) # CE
+        self._rf = RF24(spi, csn, ce)
         self._rf.open_tx_pipe(address)
         # self._rf.what_happened(1) # prints radio condition
 
