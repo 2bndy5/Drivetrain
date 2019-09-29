@@ -319,19 +319,19 @@ class PhasedMotor(Solenoid):
         val = max(-65535, min(65535, int(val)))
         # going forward
         if val > 0:
-            self._signals[0].duty_cycle = val
+            self._signals[1].duty_cycle = val
             if len(self._signals) > 1:
-                self._signals[1].value = True
+                self._signals[0].value = True
         # going backward
         elif val < 0:
-            self._signals[0].duty_cycle = (val * -1)
+            self._signals[1].duty_cycle = (val * -1)
             if len(self._signals) > 1:
-                self._signals[1].value = False
+                self._signals[0].value = False
         # otherwise stop
         else:
-            self._signals[0].duty_cycle = 0
+            self._signals[1].duty_cycle = 0
             if len(self._signals) > 1:
-                self._signals[1] = True
+                self._signals[0].value = True
 # end PhasedMotor child class
 
 class NRF24L01():
