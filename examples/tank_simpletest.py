@@ -32,7 +32,7 @@ for test in testInput:
     # do a no delay wait for at least 3 seconds
     while d.is_cellerating or t < start + 3:
         for j, m in enumerate(mymotors):
-            if not m.is_changing and end[j] is None:
+            if not m.is_cellerating and end[j] is None:
                 end[j] = time.monotonic()
         # avoid infinite looping via a hard timeout of 6 seconds
         if t > start + 6: # something went wrong; abort!

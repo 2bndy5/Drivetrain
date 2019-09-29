@@ -91,7 +91,7 @@ class StepperMotor():
         self._move_thread = None
 
     @property
-    def is_changing(self):
+    def is_cellerating(self):
         """This attribute contains a `bool` indicating if the motor is in the midst of moving.
             (read-only)
 
