@@ -282,6 +282,10 @@ class PhasedMotor(Solenoid):
         to the motor. The length of this `list`/`tuple` must be 2, otherwise a `ValueError`
         exception is thrown.
 
+        .. note:: The first pin in the `tuple`/`list` is used for the digital output signal
+            that signifies the motor's rotational direction. The second pin is used for PWM output
+            that signifies the motor's speed.
+
     :param int ramp_time: The time (in milliseconds) that is used to smooth the motor's input.
         Default is 500. This time represents the maximum amount of time that the input will be
         smoothed. Since the change in speed is also used to determine how much time will be used
@@ -296,10 +300,9 @@ class PhasedMotor(Solenoid):
         if len(pins) != 2:
             raise ValueError('The number of pins used must be 2.')
         super(PhasedMotor, self).__init__(pins, ramp_time)
-        self._signals[0].deinit()
         self._signals[1].deinit()
         self._signals.clear()
-        self._signals.append(PWMOut(pins[0]))
+        self._signals.append(PWMOut(pins[1]))
         if len(pins) >= 1:
             # save direction signal pin # & set coresponding signal value to true
             self._signals.append(DigitalInOut(pins[1]))
