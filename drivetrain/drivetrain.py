@@ -44,7 +44,7 @@ class Drivetrain:
 
     def __init__(self, motors, max_speed=100):
         for i, m in enumerate(motors):
-            if not type(m, (Solenoid, BiMotor, PhasedMotor, StepperMotor)):
+            if type(m) not in (Solenoid, BiMotor, PhasedMotor, StepperMotor):
                 raise ValueError(
                     'unknown motor (index {}) of type {}'.format(i, type(m)))
         if not motors:
@@ -52,12 +52,12 @@ class Drivetrain:
         self._motors = motors
         self._max_speed = max(0, min(max_speed, 100))
 
-    def synch(self):
+    def sync(self):
         """This function should be used at least once per main loop iteration. It will trigger each
-        motor's subsequent synch(), thus applying the smoothing input operations if needed. This is
+        motor's subsequent sync(), thus applying the smoothing input operations if needed. This is
         not needed if the smoothing algorithms are not utilized/necessary in the application"""
         for motor in self._motors:
-            motor.synch()
+            motor.sync()
 
     def stop(self):
         """This function will stop all motion in the drivetrain's motors"""
@@ -363,15 +363,15 @@ class Locomotive(Drivetrain):
             self._moving_thread = Thread(target=self._move)
             self._moving_thread.start()
         else:
-            self.synch()
+            self.sync()
 
     def _move(self):
         do_while = True
         while do_while:
-            self.synch()
+            self.sync()
             do_while = not self._cancel_thread
 
-    def synch(self):
+    def sync(self):
         """This function should be used at least once in the application's main loop. It will
         trigger the alternating of each solenoid's applied force. This IS needed on MCUs
         (microcontroller units) that can't use the threading module."""

@@ -116,13 +116,13 @@ class Solenoid:
 
     def _smooth(self):
         while not self._cancel_thread:
-            self.synch()
+            self.sync()
             # print(f'current speed: {self.value}, thread is alive: {self._smoothing_thread.is_alive()}')
             if self._cancel_thread:
                 break
 
     # pylint: disable=unidiomatic-typecheck
-    def synch(self):
+    def sync(self):
         """This function should be used at least in the application's main loop iteration. It will
         trigger the smoothing input operations on the output value if needed. This is not needed if
         the smoothing algorithms are not utilized/necessary in the application"""
@@ -130,7 +130,7 @@ class Solenoid:
         # print(f'target speed: {self._target_speed}, init speed: {self._init_speed}')
         # print(f'time_i: {time_i}')
         # print(f'end smoothing: {self._end_smooth}, init smooth: {self._init_smooth}')
-        if time_i < self._end_smooth and self.value != self._target_speed: # and type(self) is not Solenoid
+        if time_i < self._end_smooth and self.value != self._target_speed and type(self) not in (Solenoid,):
             delta_speed = (1 - cos((time_i - self._init_smooth) / float(self._end_smooth - self._init_smooth) * PI)) / 2
             self.value = int(delta_speed * (self._target_speed - self._init_speed) + self._init_speed)
             # print(f'delta speed: {delta_speed}')
@@ -168,7 +168,7 @@ class Solenoid:
         if IS_THREADED:
             self._start_thread()
         else:
-            self.synch()
+            self.sync()
 
     @property
     def value(self):

@@ -118,10 +118,10 @@ class StepperMotor():
     def _move_steps(self):
         do_while = True
         while do_while:
-            self.synch()
+            self.sync()
             do_while = not self._brake
 
-    def synch(self):
+    def sync(self):
         """This function should be used only once per main loop iteration. It will trigger stepping operations on the motor if needed."""
         if self._steps != self._target_pos and time.monotonic() < self._end_delay_time:
             # print(self._steps, '!=', self._target_pos)
@@ -260,7 +260,7 @@ class StepperMotor():
             if IS_THREADED:
                 self._start_thread()
             else:
-                self.synch()
+                self.sync()
 
     @property
     def steps(self):
@@ -284,7 +284,7 @@ class StepperMotor():
             if IS_THREADED:
                 self._start_thread()
             else:
-                self.synch()
+                self.sync()
 
     @property
     def value(self):
@@ -306,7 +306,7 @@ class StepperMotor():
             if IS_THREADED:
                 self._start_thread()
             else:
-                self.synch()
+                self.sync()
 
     def __del__(self):
         for pin in self._pins:
