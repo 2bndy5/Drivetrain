@@ -22,6 +22,9 @@ testInput = [[100, 0],
 for test in testInput:
     # use the list `end` to keep track of each motor's ellapsed time
     end = []
+    # NOTE we convert a percentage to range of an 32 bit int
+    for t in test:
+        t = t * 655.35
     for m in mymotors:
         # end timer for motor[i] = end[i]
         end.append(None)
