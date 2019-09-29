@@ -169,25 +169,30 @@ class Tank(Drivetrain):
             raise ValueError("the list/tuple of commands must be at least 2 items long")
         cmds[0] = max(-65535, min(65535, int(cmds[0])))
         cmds[1] = max(-65535, min(65535, int(cmds[1])))
-        if cmds[1] > self._max_speed:
-            cmds[1] = self._max_speed
+        # apply speed governor
+        if abs(cmds[1]) > self._max_speed * 655.35:
+            cmds[1] = self._max_speed * (655.35 if cmds[1] > 0 else -655.35)
         # assuming left/right axis is null (just going forward or backward)
         left = cmds[1]
         right = cmds[1]
-        if abs(cmds[0]) == 65535:
+        if not cmds[1]:
             # if forward/backward axis is null ("turning on a dime" functionality)
-            if cmds[0] > self._max_speed:
-                cmds[0] = self._max_speed
+            # re-apply speed governor to only axis with a non-zero value
+            if abs(cmds[0]) > self._max_speed * 655.35:
+                cmds[0] = self._max_speed * (655.35 if cmds[0] > 0 else -655.35)
             right = cmds[0]
             left = cmds[0] * -1
         else:
             # if forward/backward axis is not null and left/right axis is not null
+            # apply differential to motors accordingly
             offset = (65535 - abs(cmds[0])) / 65535.0
             if cmds[0] > 0:
                 right *= offset
             elif cmds[0] < 0:
                 left *= offset
+        # send translated commands to motors
         if smooth:
+            # if input is getting smoothed
             self._motors[0].cellerate(left * 655.35)
             self._motors[1].cellerate(right * 655.35)
         else:
@@ -251,9 +256,12 @@ class Automotive(Drivetrain):
         # make sure speeds are an integer (not decimal/float)
         cmds[0] = max(-65535, min(65535, int(cmds[0])))
         cmds[1] = max(-65535, min(65535, int(cmds[1])))
-        if cmds[1] > self._max_speed:
-            cmds[1] = self._max_speed
+        # apply speed governor
+        if abs(cmds[1]) > self._max_speed * 655.35:
+            cmds[1] = self._max_speed * (655.35 if cmds[1] > 0 else -655.35)
+        # send commands to motors
         if smooth:
+            # if input is getting smoothed
             self._motors[0].cellerate(cmds[0])
             self._motors[1].cellerate(cmds[1])
         else:
