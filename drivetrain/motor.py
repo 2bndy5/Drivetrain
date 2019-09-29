@@ -300,13 +300,11 @@ class PhasedMotor(Solenoid):
         if len(pins) != 2:
             raise ValueError('The number of pins used must be 2.')
         super(PhasedMotor, self).__init__(pins, ramp_time)
+        # free up the 2nd digital pin from parent's declaration
         self._signals[1].deinit()
-        self._signals.clear()
+        # remove 2nd pin from list and re-append it as PWMOut object
+        self._signals.pop()
         self._signals.append(PWMOut(pins[1]))
-        if len(pins) >= 1:
-            # save direction signal pin # & set coresponding signal value to true
-            self._signals.append(DigitalInOut(pins[1]))
-            self._signals[1].switch_to_output(value=True)
 
     @property
     def value(self):
@@ -314,7 +312,7 @@ class PhasedMotor(Solenoid):
         [-65535, 65535]. An invalid input value will be clamped to an `int` in the proper range.
         A negative value represents the motor's speed in reverse rotation. A positive value
         reprsents the motor's speed in forward rotation."""
-        return self._signals[0].duty_cycle * (1 if self._signals[1].value else -1)
+        return self._signals[1].duty_cycle * (1 if self._signals[0].value else -1)
 
     @value.setter
     def value(self, val):
