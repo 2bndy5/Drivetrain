@@ -28,7 +28,7 @@ for test in testInput:
     for m in mymotors:
         # end timer for motor[i] = end[i]
         end.append(None)
-    d.go(test * 655.35)  # send input commands
+    d.go(test)  # send input commands
     # unanimous start of all timmers
     start = time.monotonic()
     t = start
