@@ -1,4 +1,5 @@
-"""A simple test of the PhasedMotor class
+"""
+A simple test of the PhasedMotor class
 
 This iterates through a list of motor commands
 and prints the ellapsed time taken to acheive each command
@@ -16,10 +17,7 @@ for test in Value:
     motor.cellerate(test * 655.35)
     start = time.monotonic()
     t = start
-    # do a no delay wait for at least 3 seconds
-    while motor.is_cellerating or t < start + 3:
+    # do a no delay wait for at most 3 seconds
+    while motor.is_cellerating and t < start + 3:
         t = time.monotonic()
-        # avoid infinite looping via a hard timeout of 6 seconds
-        if t > start + 6: # something went wrong; abort!
-            break
-    print(f'test command {test * 655.35} took {time.monotonic()-start} seconds')
+    print(f'test result {test * 655.35} took {t - start} seconds')

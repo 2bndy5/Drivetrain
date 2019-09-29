@@ -22,6 +22,9 @@ testInput = [[100, 0],
 for test in testInput:
     # use the list `end` to keep track of each motor's ellapsed time
     end = []
+    # NOTE we convert a percentage to range of an 32 bit int
+    for t_val in test:
+        t_val = t_val * 655.35
     for m in mymotors:
         # end timer for motor[i] = end[i]
         end.append(None)
@@ -31,18 +34,15 @@ for test in testInput:
     t = start
     # do a no delay wait for at least 3 seconds
     while d.is_cellerating or t < start + 3:
+        t = time.monotonic()
         for j, m in enumerate(mymotors):
             if not m.is_cellerating and end[j] is None:
-                end[j] = time.monotonic()
-        # avoid infinite looping via a hard timeout of 6 seconds
-        if t > start + 6: # something went wrong; abort!
-            break
+                end[j] = t
 
-    # notice the motor values are different from the drivetrain's commands' value
-    # ratio of drivetrain commands to motor value == [-100, 100] : [-65535, 65535]
-    print(f'test commands {repr(test)} took {time.monotonic() - start} seconds\n')
+    print(f'test commands {repr(test)} took {t - start} seconds')
     for j, m in enumerate(mymotors):
         if end[j] is not None:
             print(f'motor {j} acheived {m.value} in {end[j]-start} seconds')
         else:
             print(f"motor {j} didn't finish cellerating and a has value of {m.value}")
+    print(' ') # for clearer print statement grouping

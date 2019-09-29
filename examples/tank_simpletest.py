@@ -39,7 +39,7 @@ for test in testInput:
             if not m.is_cellerating and end[j] is None:
                 end[j] = t
 
-    print(f'test commands {repr(test)} took {time.monotonic() - start} seconds')
+    print(f'test commands {repr(test)} took {t - start} seconds')
     for j, m in enumerate(mymotors):
         if end[j] is not None:
             print(f'motor {j} acheived {m.value} in {end[j]-start} seconds')
