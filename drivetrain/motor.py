@@ -204,13 +204,15 @@ class Solenoid:
                 self._signals[1] = False
 
     def __del__(self):
+        if self.value:
+            self.value = 0
         self._cancel_thread = False
         if self._smoothing_thread is not None:
             del self._smoothing_thread
         for signal in self._signals:
             signal.deinit()
         self._signals.clear()
-
+# end Solenoid parent class
 
 class BiMotor(Solenoid):
     """This class is meant be used for motors driven by driver boards/ICs that expect 2 PWM outputs
@@ -319,19 +321,16 @@ class PhasedMotor(Solenoid):
         val = max(-65535, min(65535, int(val)))
         # going forward
         if val > 0:
+            self._signals[0].value = True
             self._signals[1].duty_cycle = val
-            if len(self._signals) > 1:
-                self._signals[0].value = True
         # going backward
         elif val < 0:
+            self._signals[0].value = False
             self._signals[1].duty_cycle = (val * -1)
-            if len(self._signals) > 1:
-                self._signals[0].value = False
         # otherwise stop
         else:
+            self._signals[0].value = False
             self._signals[1].duty_cycle = 0
-            if len(self._signals) > 1:
-                self._signals[0].value = True
 # end PhasedMotor child class
 
 class NRF24L01():
