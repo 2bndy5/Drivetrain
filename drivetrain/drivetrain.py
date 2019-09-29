@@ -279,7 +279,7 @@ class External:
     """
 
     def __init__(self, interface):
-        if type(interface, (USB, NRF24L01)):
+        if type(interface) in (USB, NRF24L01):
             self._interface = interface
         else:
             raise ValueError('The "External" drivetrain class only supports interfaces of type'
