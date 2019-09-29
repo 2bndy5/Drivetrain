@@ -25,12 +25,13 @@ for test in testInput:
     for m in mymotors:
         # end timer for motor[i] = end[i]
         end.append(None)
-    d.go(test)  # send input commands
+    d.go(test * 655.35)  # send input commands
     # unanimous start of all timmers
     start = time.monotonic()
     t = start
     # do a no delay wait for at least 3 seconds
     while d.is_cellerating or t < start + 3:
+        t = time.monotonic()
         for j, m in enumerate(mymotors):
             if not m.is_cellerating and end[j] is None:
                 end[j] = time.monotonic()
