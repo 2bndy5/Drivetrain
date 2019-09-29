@@ -8,10 +8,10 @@ as well as the ellapsed time taken for each motor to acheive each individual com
 # pylint: disable=invalid-name
 import time
 import board
-from drivetrain.drivetrain import Automotive, BiMotor
+from drivetrain.drivetrain import Automotive, PhasedMotor
 
-mymotors = [BiMotor([board.D22, board.D13], ramp_time=2000),
-            BiMotor([board.D17, board.D18], ramp_time=2000)]
+mymotors = [PhasedMotor([board.D22, board.D13], ramp_time=2000),
+            PhasedMotor([board.D17, board.D18], ramp_time=2000)]
 d = Automotive(mymotors)
 testInput = [[100, 0],
              [-100, 0],
