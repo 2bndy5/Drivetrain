@@ -12,7 +12,7 @@ from drivetrain.drivetrain import Automotive, BiMotor
 
 mymotors = [BiMotor([board.D22, board.D13], ramp_time=2000),
             BiMotor([board.D17, board.D18], ramp_time=2000)]
-d = Automotive(mymotors, max_speed=100)
+d = Automotive(mymotors)
 testInput = [[100, 0],
              [-100, 0],
              [0, 0],
@@ -23,8 +23,8 @@ for test in testInput:
     # use the list `end` to keep track of each motor's ellapsed time
     end = []
     # NOTE we convert a percentage to range of an 32 bit int
-    for t_val in test:
-        t_val = t_val * 655.35
+    for i, t_val in enumerate(test):
+        test[i] = t_val * 655.35
     for m in mymotors:
         # end timer for motor[i] = end[i]
         end.append(None)

@@ -141,16 +141,16 @@ class Tank(Drivetrain):
         """This function applies the user input to the motors' output according to drivetrain's motor
         configuration stated in the contructor documentation.
 
-        :param list,tuple cmds: A `list` or `tuple` of input motor commands to be processed and
+        :param list cmds: A `list` of input motor commands to be processed and
             passed to the motors. This list must have at least 2 items (input values), and any
-            additional items will be ignored. A `list`/`tuple` of length less than 2 will throw a
+            additional items will be ignored. A `list` of length less than 2 will throw a
             `ValueError` exception.
 
             .. important:: Ordering of the motor inputs contained in this list/tuple matters. They
                 should correspond to the following order:
 
-                1. forward/reverse magnitude in range [-65535, 65535]
-                2. left/right magnitude in range [-65535, 65535]
+                1. left/right magnitude in range [-65535, 65535]
+                2. forward/reverse magnitude in range [-65535, 65535]
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
@@ -166,7 +166,7 @@ class Tank(Drivetrain):
 
         """
         if len(cmds) < 2:
-            raise ValueError("the list/tuple of commands must be at least 2 items long")
+            raise ValueError("the list of commands must be at least 2 items long")
         cmds[0] = max(-65535, min(65535, int(cmds[0])))
         cmds[1] = max(-65535, min(65535, int(cmds[1])))
         # apply speed governor
@@ -226,16 +226,16 @@ class Automotive(Drivetrain):
         """This function applies the user input to motor output according to drivetrain's motor
         configuration.
 
-        :param list,tuple cmds: A `list` or `tuple` of input motor commands to be passed to the
-            motors. This `list`/`tuple` must have at least 2 items (input values), and any
-            additional item(s) will be ignored. A `list`/`tuple` of length less than 2 will throw a
+        :param list cmds: A `list` of input motor commands to be passed to the
+            motors. This `list` must have at least 2 items (input values), and any
+            additional item(s) will be ignored. A `list` of length less than 2 will throw a
             `ValueError` exception.
 
             .. important:: Ordering of the motor inputs contained in this list/tuple matters. They
                 should correspond to the following order:
 
-                1. forward/reverse magnitude in range [-65535, 65535]
-                2. left/right magnitude in range [-65535, 65535]
+                1. left/right magnitude in range [-65535, 65535]
+                2. forward/reverse magnitude in range [-65535, 65535]
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
@@ -251,9 +251,7 @@ class Automotive(Drivetrain):
 
         """
         if len(cmds) < 2:
-            raise ValueError(
-                "the list/tuple of commands must be at least 2 items long")
-        # make sure speeds are an integer (not decimal/float)
+            raise ValueError("the list of commands must be at least 2 items long")
         cmds[0] = max(-65535, min(65535, int(cmds[0])))
         cmds[1] = max(-65535, min(65535, int(cmds[1])))
         # apply speed governor
@@ -268,7 +266,7 @@ class Automotive(Drivetrain):
             self._motors[0].value = cmds[0]
             self._motors[1].value = cmds[1]
         self._gogo(cmds)
-
+# end Automotive drivetrain class
 
 class External:
     """A class to be used for controlling drivetrains not physically attached to the host
