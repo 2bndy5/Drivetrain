@@ -8,7 +8,7 @@ as well as the ellapsed time taken for each motor to acheive each individual com
 # pylint: disable=invalid-name
 import time
 import board
-from drivetrain.drivetrain import Automotive, PhasedMotor
+from drivetrain import Automotive, PhasedMotor
 
 mymotors = [PhasedMotor([board.D22, board.D13], ramp_time=2000),
             PhasedMotor([board.D17, board.D18], ramp_time=2000)]

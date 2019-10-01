@@ -7,7 +7,7 @@ and prints the ellapsed time taken to acheive each command
 # pylint: disable=invalid-name
 import time
 import board
-from drivetrain.motor import PhasedMotor
+from drivetrain import PhasedMotor
 
 motor = PhasedMotor([board.D17, board.D18], ramp_time=2000)
 Value = [-25, 25, -100, 100, 0]

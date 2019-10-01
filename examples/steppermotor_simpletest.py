@@ -2,7 +2,7 @@
 # pylint: disable=invalid-name
 import time
 import board
-from drivetrain.stepper import StepperMotor
+from drivetrain import StepperMotor
 
 motor = StepperMotor([board.D13, board.D12, board.D11, board.D10])
 Steps = [-256, 256, 0] # 1024, 2048, 4096]
