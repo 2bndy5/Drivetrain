@@ -24,7 +24,8 @@
 Solenoid, BiMotor, & PhasedMotor
 ================================
 
-A collection of driver classes for different single phase DC motors implementing the threading module. Includes Solenoid (parent base class), BiMotor & PhasedMotor (children of Solenoid)
+A collection of driver classes for different single phase DC motors implementing the threading
+module. Includes Solenoid (parent base class), BiMotor & PhasedMotor (children of Solenoid)
 
 """
 from math import pi as PI, cos
@@ -43,7 +44,7 @@ try:
 except ImportError:
     from .pwm import PWMOut
 
-# pylint: disable=invalid-name,too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,too-few-public-methods,invalid-name
 
 class Solenoid:
     """This base class is meant be used as a parent to `BiMotor` and `PhasedMotor` classes of this
@@ -54,8 +55,8 @@ class Solenoid:
     class can be used to control up to 2 solenoids (see also `value` attribute for more details) as
     in the case of an actual locomotive train.
 
-    :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive the
-        the solenoid(s). The length of this `list`/`tuple` must be in range [1, 2] (any
+    :param list pins: A `list` of (`board` module's) pins that are used to drive the
+        the solenoid(s). The length of this `list` must be in range [1, 2] (any
         additional items/pins will be ignored).
 
     :param int ramp_time: This parameter is really a placeholder for the child classes
@@ -117,11 +118,9 @@ class Solenoid:
     def _smooth(self):
         while not self._cancel_thread:
             self.sync()
-            # print(f'current speed: {self.value}, thread is alive: {self._smoothing_thread.is_alive()}')
             if self._cancel_thread:
                 break
 
-    # pylint: disable=unidiomatic-typecheck
     def sync(self):
         """This function should be used at least in the application's main loop iteration. It will
         trigger the smoothing input operations on the output value if needed. This is not needed if
@@ -130,15 +129,17 @@ class Solenoid:
         # print(f'target speed: {self._target_speed}, init speed: {self._init_speed}')
         # print(f'time_i: {time_i}')
         # print(f'end smoothing: {self._end_smooth}, init smooth: {self._init_smooth}')
-        if time_i < self._end_smooth and self.value != self._target_speed and type(self) not in (Solenoid,):
-            delta_speed = (1 - cos((time_i - self._init_smooth) / float(self._end_smooth - self._init_smooth) * PI)) / 2
-            self.value = int(delta_speed * (self._target_speed - self._init_speed) + self._init_speed)
+        if time_i < self._end_smooth and self.value != self._target_speed and \
+            issubclass(self, Solenoid):
+            delta_speed = (1 - cos((time_i - self._init_smooth) / float(self._end_smooth \
+                - self._init_smooth) * PI)) / 2
+            self.value = int(delta_speed * (self._target_speed - self._init_speed) + \
+                 self._init_speed)
             # print(f'delta speed: {delta_speed}')
         else:
             # print('done changing speed')
             self.value = self._target_speed
             self._cancel_thread = True
-    # pylint: enable=unidiomatic-typecheck
 
     @property
     def is_cellerating(self):
@@ -182,7 +183,8 @@ class Solenoid:
             solenoids.
 
         """
-        return self._signals[0].value or self._signals[1].value if len(self._signals) > 1 else self._signals[0].value
+        return self._signals[0].value or self._signals[1].value if \
+            len(self._signals) > 1 else self._signals[0].value
 
     @value.setter
     def value(self, val):
@@ -251,7 +253,8 @@ class BiMotor(Solenoid):
         [-65535, 65535]. An invalid input value will be clamped to an `int` in the proper range.
         A negative value represents the motor's speed in reverse rotation. A positive value
         reprsents the motor's speed in forward rotation."""
-        return self._signals[0].duty_cycle - (self._signals[1].duty_cycle if len(self._signals) > 1 else 0)
+        return self._signals[0].duty_cycle - \
+            (self._signals[1].duty_cycle if len(self._signals) > 1 else 0)
 
     @value.setter
     def value(self, val):
@@ -280,8 +283,8 @@ class PhasedMotor(Solenoid):
         * 1 PWM output (to control the motor's speed)
         * 1 digital output (to control the motor's rotational direction)
 
-    :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive the
-        to the motor. The length of this `list`/`tuple` must be 2, otherwise a `ValueError`
+    :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive
+        the to the motor. The length of this `list`/`tuple` must be 2, otherwise a `ValueError`
         exception is thrown.
 
         .. note:: The first pin in the `tuple`/`list` is used for the digital output signal
@@ -342,6 +345,10 @@ class NRF24L01():
         .. note:: This object should be shared among other driver classes that connect to different
             devices on the same SPI bus (SCK, MOSI, & MISO pins)
 
+    :param list,tuple pins: A `list` or `tuple` of (`board` module's) digital output pins that
+        are connected to the nRF24L01's CSN and CE pins respectively. The length of this `list`
+        /`tuple` must be 2, otherwise a `ValueError` exception is thrown.
+
     :param bytearray address: This will be the RF address used to transmit to the receiving
         nRF24L01 transceiver. For more information on this parameter's usage, please read the
         documentation on the using the `circuitpython-nrf24l01 library
@@ -349,9 +356,9 @@ class NRF24L01():
 
     """
     def __init__(self, spi, pins, address=b'rfpi0'):
-        if type(pins) not in (list, tuple) and len(pins) != 2:
+        if isinstance(pins, (list, tuple)) and len(pins) != 2:
             raise ValueError('pins parameter must be a list of length 2 (CE and CSN respectively)')
-        if type(spi) not in (SPI,):
+        if isinstance(spi, SPI):
             raise ValueError('spi parameter must be an object of type busio.SPI')
         csn = DigitalInOut(pins[0]) # CSN
         ce = DigitalInOut(pins[1]) # CE

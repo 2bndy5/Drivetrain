@@ -44,7 +44,7 @@ class Drivetrain:
 
     def __init__(self, motors, max_speed=100):
         for i, m in enumerate(motors):
-            if type(m) not in (Solenoid, BiMotor, PhasedMotor, StepperMotor):
+            if isinstance(m, (Solenoid, BiMotor, PhasedMotor, StepperMotor)):
                 raise ValueError(
                     'unknown motor (index {}) of type {}'.format(i, type(m)))
         if not motors:
@@ -138,8 +138,8 @@ class Tank(Drivetrain):
         super(Tank, self).__init__(motors, max_speed)
 
     def go(self, cmds, smooth=True):
-        """This function applies the user input to the motors' output according to drivetrain's motor
-        configuration stated in the contructor documentation.
+        """This function applies the user input to the motors' output according to drivetrain's
+        motor configuration stated in the contructor documentation.
 
         :param list cmds: A `list` of input motor commands to be processed and
             passed to the motors. This list must have at least 2 items (input values), and any
@@ -285,7 +285,7 @@ class External:
     """
 
     def __init__(self, interface):
-        if type(interface) in (USB, NRF24L01):
+        if isinstance(interface, (USB, NRF24L01)):
             self._interface = interface
         else:
             raise ValueError('The "External" drivetrain class only supports interfaces of type'
@@ -311,8 +311,8 @@ class Locomotive(Drivetrain):
     with a locomotive train, applied force is alternated between the 2 solenoids using a
     boolean-ized pressure sensor or switch to determine when the applied force is alternated.
 
-    :param ~derivetrain.motor.Solenoid solenoids: This object has 1 or 2 solenoids attached. It will be
-        used to apply the force for propulsion.
+    :param ~derivetrain.motor.Solenoid solenoids: This object has 1 or 2 solenoids attached. It
+        will be used to apply the force for propulsion.
 
     :param ~microcontroller.Pin switch: This should be the (`board` module's) pin that is connected
         to the sensor that will be used to determine when the force for propulsion should be
