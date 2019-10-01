@@ -35,7 +35,7 @@ from busio import SPI
 from circuitpython_nrf24l01 import RF24
 IS_THREADED = True
 try:
-    from threading import Thread
+    from multiprocessing import Process
 except ImportError:
     IS_THREADED = False
 try:
@@ -105,21 +105,19 @@ class Solenoid:
     def _start_thread(self):
         if self._smoothing_thread is not None:
             self._stop_thread()
-        self._smoothing_thread = Thread(target=self._smooth)
+        self._smoothing_thread = Process(target=self._smooth)
         self._smoothing_thread.start()
 
     def _stop_thread(self):
         if self._smoothing_thread is not None:
             self._cancel_thread = True
-            self._smoothing_thread.join()
+            self._smoothing_thread.terminate()
             self._cancel_thread = False
 
     def _smooth(self):
         while not self._cancel_thread:
             self.sync()
             # print(f'current speed: {self.value}, thread is alive: {self._smoothing_thread.is_alive()}')
-            if self._cancel_thread:
-                break
 
     # pylint: disable=unidiomatic-typecheck
     def sync(self):

@@ -35,7 +35,7 @@ from .stepper import StepperMotor
 from .motor import Solenoid, BiMotor, PhasedMotor, NRF24L01, USB
 IS_THREADED = True
 try:
-    from threading import Thread
+    from multiprocessing import Process
 except ImportError:
     IS_THREADED = False
 
@@ -342,11 +342,11 @@ class Locomotive(Drivetrain):
         self._is_in_motion = False
 
     def _stop_thread(self):
-        if self._moving_thread is not None:
+        if self._moving_thread is not None and self._moving_thread.is_alive():
             self._cancel_thread = True
-            self._moving_thread.join()
+            self._moving_thread.terminate()
             self._cancel_thread = False
-        self._moving_thread = None
+        self._moving_thread
 
     def go(self, forward):
         """This function starts the process of alternating applied force between the solenoids
@@ -366,16 +366,14 @@ class Locomotive(Drivetrain):
         self._is_in_motion = True
         self.stop()
         if IS_THREADED:
-            self._moving_thread = Thread(target=self._move)
+            self._moving_thread = Process(target=self._move)
             self._moving_thread.start()
         else:
             self.sync()
 
     def _move(self):
-        do_while = True
-        while do_while:
+        while not self._cancel_thread:
             self.sync()
-            do_while = not self._cancel_thread
 
     def sync(self):
         """This function should be used at least once in the application's main loop. It will
@@ -389,6 +387,5 @@ class Locomotive(Drivetrain):
     def is_cellerating(self):
         """This attribute contains a `bool` indicating if the drivetrain's applied force via
         solenoids is in the midst of alternating. (read-only)"""
-        if self._moving_thread is not None or self._is_in_motion:
-            return True
-        return False
+        return (self._moving_thread is not None and self._moving_thread.is_alive()) or self._is_in_motion
+        

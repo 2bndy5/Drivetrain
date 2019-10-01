@@ -32,7 +32,7 @@ from math import floor, ceil
 import digitalio
 IS_THREADED = True
 try:
-    from threading import Thread
+    from multiprocessing import Process
 except ImportError:
     IS_THREADED = False
 
@@ -107,19 +107,17 @@ class StepperMotor():
     def _stop_thread(self):
         self._brake = True
         if self._move_thread is not None:
-            self._move_thread.join()
+            self._move_thread.terminate()
         self._move_thread = None
         self._brake = False
 
     def _start_thread(self):
-        self._move_thread = Thread(target=self._move_steps)
+        self._move_thread = Process(target=self._move_steps)
         self._move_thread.start()
 
     def _move_steps(self):
-        do_while = True
-        while do_while:
+        while not self._brake:
             self.sync()
-            do_while = not self._brake
 
     def sync(self):
         """This function should be used only once per main loop iteration. It will trigger stepping operations on the motor if needed."""
