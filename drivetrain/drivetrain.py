@@ -43,8 +43,10 @@ class Drivetrain:
     """A base class that is only used for inheriting various types of drivetrain configurations."""
 
     def __init__(self, motors, max_speed=100):
+        #  prototype motors lust to avoid error in __del__ on exceptions
+        self._motors = []
         for i, m in enumerate(motors):
-            if isinstance(m, (Solenoid, BiMotor, PhasedMotor, StepperMotor)):
+            if not isinstance(m, (Solenoid, BiMotor, PhasedMotor, StepperMotor)):
                 raise ValueError(
                     'unknown motor (index {}) of type {}'.format(i, type(m)))
         if not motors:
