@@ -46,7 +46,7 @@ class Drivetrain:
         # prototype the motors list avoiding errors in __del__ on raised exceptions
         self._motors = []
         for i, m in enumerate(motors):
-            if isinstance(m, (Solenoid, BiMotor, PhasedMotor, StepperMotor)):
+            if not isinstance(m, (Solenoid, BiMotor, PhasedMotor, StepperMotor)):
                 raise ValueError(
                     'unknown motor (index {}) of type {}'.format(i, type(m)))
         if not motors:
