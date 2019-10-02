@@ -356,9 +356,9 @@ class NRF24L01():
 
     """
     def __init__(self, spi, pins, address=b'rfpi0'):
-        if isinstance(pins, (list, tuple)) and len(pins) != 2:
+        if not isinstance(pins, (list, tuple)) and len(pins) != 2:
             raise ValueError('pins parameter must be a list of length 2 (CE and CSN respectively)')
-        if isinstance(spi, SPI):
+        if not isinstance(spi, SPI):
             raise ValueError('spi parameter must be an object of type busio.SPI')
         csn = DigitalInOut(pins[0]) # CSN
         ce = DigitalInOut(pins[1]) # CE
