@@ -188,7 +188,7 @@ body {
 }
 
 .wy-side-nav-search input[type=text] {
- background: #313131;
+ background: #3e3e3e;
  color: #fcfcfc;
 }
 
@@ -225,6 +225,32 @@ body {
  background:#006B09;
 }
 
+.wy-menu-vertical li.on a span.toctree-expand, .wy-menu-vertical li.current > a span.toctree-expand {
+  color: #f2f2f2;
+}
+
+.wy-menu-vertical li span.toctree-expand {
+  color: #f2f2f2;
+}
+
+.wy-menu-vertical li.current {
+  background: #034e69;
+}
+
+.wy-menu-vertical li.toctree-l2 a,
+.wy-menu-vertical li.toctree-l3 a,
+.wy-menu-vertical li.toctree-l4 a {
+ color:#f2f2f2;
+}
+
+.wy-menu-vertical li.current a:hover {
+  background:#3e3e3ecf;
+}
+
+.wy-menu-vertical li.toctree-l2.current>a {
+  background:#242424;
+}
+ 
 /* -----------------------------------------API sections-------------------------------------- */
 .rst-content dl:not(.docutils) dl dt {
   background: #343434;

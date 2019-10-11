@@ -41,7 +41,6 @@ except ImportError:
 
 class Drivetrain:
     """A base class that is only used for inheriting various types of drivetrain configurations."""
-
     def __init__(self, motors, max_speed=100):
         #  prototype motors lust to avoid error in __del__ on exceptions
         self._motors = []
@@ -53,6 +52,7 @@ class Drivetrain:
             raise ValueError('No motors were passed to the drivetrain.')
         self._motors = motors
         self._max_speed = max(0, min(max_speed, 100))
+        self._prev_cmds = [0, 0]
 
     def sync(self):
         """This function should be used at least once per main loop iteration. It will trigger each
@@ -66,9 +66,9 @@ class Drivetrain:
         commands = []
         for _ in self._motors:
             commands.append(0)
-        self._gogo(commands, 0)
+        self.go(commands, 0)
 
-    def _gogo(self, aux, init=2):
+    def go(self, aux, init=2):
         """A helper function to the child classes to handle extra periphial motors attached to the
         `Drivetrain` object. This is only useful for motors that serve a specialized purpose
         other than propulsion.
@@ -80,12 +80,17 @@ class Drivetrain:
             passing values to the corresponding motors.
 
         """
+        self._prev_cmds = aux
         if len(aux) > init:
             for i in range(init, len(aux)):
                 if i < len(self._motors):
                     self._motors[i].value = aux[i]
                 else:
                     print('motor[{}] not declared and/or installed'.format(i))
+
+    @property
+    def value(self):
+        return self._prev_cmds
 
     @property
     def is_cellerating(self):
@@ -120,8 +125,7 @@ class Drivetrain:
 
 class Tank(Drivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
-    are shared tasks. For example: R2D2 has 2 motors (1 in each leg -- the front retractable
-    wheel is free pivoting) for propulsion and steering.
+    are shared tasks (also known as a "Differential" Drivetrain). For example: The military's tank vehicle essentially has 2 motors (1 on each side) where propulsion is done by both motors, and steering is controlled by varying the different motors' input commands.
 
     :param list motors: A `list` of motors that are to be controlled in concert. Each item in this
         `list` represents a single motor object and must be of type `Solenoid`, `BiMotor`,
@@ -200,13 +204,13 @@ class Tank(Drivetrain):
         else:
             self._motors[0].value = left * 655.35
             self._motors[1].value = right * 655.35
-        self._gogo(cmds)
+        super().go(cmds)
 
 
 class Automotive(Drivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
     are separate tasks. The first motor is used to steer, and the second motor is used to
-    propell.
+    propell. An example of this would be any remote control toy vehicle.
 
     :param list motors: A `list` of motors that are to be controlled in concert. Each item in this
         `list` represents a single motor object and must be of type `Solenoid`, `BiMotor`,
@@ -267,7 +271,7 @@ class Automotive(Drivetrain):
         else:
             self._motors[0].value = cmds[0]
             self._motors[1].value = cmds[1]
-        self._gogo(cmds)
+        super().go(cmds)
 # end Automotive drivetrain class
 
 class External:
@@ -292,7 +296,11 @@ class External:
         else:
             raise ValueError('The "External" drivetrain class only supports interfaces of type'
                              ' class USB or NRF24L01')
-        self._last_cmds = []
+        self._prev_cmds = []
+
+    @property
+    def value(self):
+        return self._prev_cmds
 
     def go(self, cmds):
         """This function simply passes motor control commands to the specified ``interface``
@@ -305,8 +313,8 @@ class External:
             <https://github.com/DVC-Viking-Robotics/Drivetrain/issues/3>`_
 
         """
+        self._prev_cmds = cmds
         self._interface.go(cmds)
-
 
 class Locomotive(Drivetrain):
     """This class relies soley on one `Solenoid` object controlling 2 solenoids in tandem. Like
