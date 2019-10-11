@@ -126,16 +126,16 @@ class Solenoid:
         trigger the smoothing input operations on the output value if needed. This is not needed if
         the smoothing algorithms are not utilized/necessary in the application"""
         time_i = int(time.monotonic() * 1000)
-        # print(f'target speed: {self._target_speed}, init speed: {self._init_speed}')
-        # print(f'time_i: {time_i}')
-        # print(f'end smoothing: {self._end_smooth}, init smooth: {self._init_smooth}')
+        # print('target speed: {}, init speed: {}'.format(self._target_speed, self._init_speed))
+        # print('time_i: {}'.format(time_i))
+        # print('end smoothing: {}, init smooth: {}'.format(self._end_smooth, self._init_smooth))
         if time_i < self._end_smooth and self.value != self._target_speed and \
             type(self) not in (Solenoid,):
             delta_speed = (1 - cos((time_i - self._init_smooth) / float(self._end_smooth \
                 - self._init_smooth) * PI)) / 2
             self.value = int(delta_speed * (self._target_speed - self._init_speed) + \
                  self._init_speed)
-            # print(f'delta speed: {delta_speed}')
+            # print('delta speed: {}'.format(delta_speed))
         else:
             # print('done changing speed')
             self.value = self._target_speed
@@ -164,7 +164,7 @@ class Solenoid:
         self._init_smooth = int(time.monotonic() * 1000)
         self._init_speed = self.value
         delta_time = abs((self._target_speed - self._init_speed) / 131070)
-        # print(f'dt calculated: {delta_time}')
+        # print('dt calculated: {}'.format(delta_time))
         self._end_smooth = int(self._init_smooth + delta_time * self.ramp_time)
         if IS_THREADED:
             self._start_thread()
@@ -396,9 +396,9 @@ class USB():
                 self._ser = serial.Serial(address)
             else:
                 self._ser = serial.Serial(address, baud)
-            print(f'Successfully opened port {address} @ {baud} to Arduino device')
+            print('Successfully opened port {} @ {} to Arduino device'.format(address, baud))
         except serial.SerialException:
-            raise ValueError(f'unable to open serial arduino device @ port {address}')
+            raise ValueError('unable to open serial arduino device @ port {}'.format(address))
 
     def go(self, cmds):
         """Assembles an encoded bytearray for outputting over the Serial connection.

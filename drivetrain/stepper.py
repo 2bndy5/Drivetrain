@@ -72,7 +72,7 @@ class StepperMotor():
         if len(pins) % 2 or not pins:
             raise ValueError('The number of pins should be divisible by 2 and greater than 0.')
         if step_type not in ('half', 'full', 'wave'):
-            raise ValueError(f"Unrecognized step type {step_type}. Expected 'half', 'full', or 'wave'")
+            raise ValueError("Unrecognized step type {}. Expected 'half', 'full', or 'wave'".format(step_type))
         self._spr = steps_per_rev # max # of steps in 1 revolution
         self._dps = degree_per_step # used to calculate angle
         self._step_type = step_type # can be 'wave', 'full', or 'half' for stepping pattern
@@ -236,7 +236,8 @@ class StepperMotor():
         return pin_bin
 
     def __repr__(self):
-        return f'pins: {bin(self._pin_bin)} Angle: {self.angle} Steps: {self.steps} Value: {self.value}'
+        return 'pins: {} Angle: {} Steps: {} Value: {}'.format(
+            bin(self._pin_bin), self.angle, self.steps, self.value)
 
     @property
     def angle(self):

@@ -39,10 +39,10 @@ for test in testInput:
             if not m.is_cellerating and end[j] is None:
                 end[j] = t
 
-    print(f'test commands {repr(test)} took {t - start} seconds')
+    print('test commands {} took {} seconds'.format(repr(test), t - start))
     for j, m in enumerate(mymotors):
         if end[j] is not None:
-            print(f'motor {j} acheived {m.value} in {end[j]-start} seconds')
+            print('motor {} acheived {} in {} seconds'.format(j, m.value, end[j]-start))
         else:
-            print(f"motor {j} didn't finish cellerating and a has value of {m.value}")
+            print("motor {} didn't finish cellerating and a has value of {}".format(j, m.value))
     print(' ') # for clearer print statement grouping

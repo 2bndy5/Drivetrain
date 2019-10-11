@@ -85,7 +85,7 @@ class Drivetrain:
                 if i < len(self._motors):
                     self._motors[i].value = aux[i]
                 else:
-                    print(f'motor[{i}] not declared and/or installed')
+                    print('motor[{}] not declared and/or installed'.format(i))
 
     @property
     def is_cellerating(self):
@@ -109,7 +109,7 @@ class Drivetrain:
         """Aggregates all the motors current values into a printable string."""
         output = ''
         for i, m in self._motors:
-            output += f'motor {i} value = {m.value}'
+            output += 'motor {} value = {}'.format(i, m.value)
             if i != len(self._motors) - 1:
                 output += ','
 
