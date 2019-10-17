@@ -3,7 +3,7 @@ A colection of controlling interfaces for drivetrains (both external and interna
 
 """
 
-from serial import Serial, SerialException
+from serial import Serial
 from busio import SPI
 from digitalio import DigitalInOut
 from circuitpython_nrf24l01 import RF24
@@ -57,7 +57,8 @@ class NRF24L01tx(NRF24L01):
         command = b''
         for cmd in cmds:
             command += bytes([cmd])
-        print('transmit', repr(cmds), 'returned:', self._rf.send(command))
+        success = self._rf.send(command)
+        # print('transmit', repr(cmds), 'returned:', success)
 
 class NRF24L01rx(NRF24L01):
     def __init__(self, spi, pins, drivetrain, address=b'rfpi0'):
@@ -80,14 +81,12 @@ class USB():
 
     :param string address: The serial port address of the external serial device.
     :param int baud: The specific baudrate to be used for the serial connection. If left
-        unspecified, the serial library will assume a baudrate of 9600.
+        unspecified, the default baudrate of 9600 is used.
+    :param int timeout: Specific number of seconds till the threading :class:`~serial.Serial`'s `~serial.Serial.read_until()` operation expires. Defaults to 1 second.
 
     """
-    def __init__(self, address='/dev/ttyUSB0', baud=-1):
-        if baud < 0:
-            self._ser = Serial(address)
-        else:
-            self._ser = Serial(address, baud)
+    def __init__(self, address='/dev/ttyUSB0', baud=9600, timeout=1.0):
+        self._ser = Serial(address=address, baud=baud, timeout=timeout)
         # print('Successfully opened port {} @ {} to Arduino device'.format(address, baud))
         self._ser.close()
         self._prev_cmds = [None, None]
@@ -98,7 +97,7 @@ class USB():
 
 class USBtx(USB):
     def go(self, cmds):
-        """Assembles an encoded bytearray for outputting over the Serial connection.
+        """Assembles a bytearray for outputting over the Serial connection.
 
         :param list,tuple cmds: A `list` or `tuple` of `int` commands to be sent over the Serial
             connection. This `list`/`tuple` can have any length (at least 1) as needed.
@@ -114,7 +113,7 @@ class USBtx(USB):
             usb.write(commands)
 
 class USBrx(USB):
-    def __init__(self, drivetrain, address='/dev/ttyUSB0', baud=-1):
+    def __init__(self, drivetrain, address='/dev/ttyUSB0', baud=9600):
         self._d_train = drivetrain
         super(USBrx, self).__init__(address=address, baud=baud)
 
@@ -122,7 +121,7 @@ class USBrx(USB):
         commands = []
         with self._ser as usb:
             if usb.in_waiting:
-                commands = usb.readline().rsplit(' ')
+                commands = usb.read_until().rsplit(' ')
         for i in range(len(commands)):
             commands[i] = int(commands[i])
         if len(commands):
