@@ -32,7 +32,7 @@ configurations for the raspberry pi. Currently only supporting the R2D2 (aliased
 # pylint: disable=arguments-differ,invalid-name
 from digitalio import DigitalInOut
 from .stepper import StepperMotor
-from .motor import Solenoid, BiMotor, PhasedMotor, NRF24L01, USB
+from .motor import Solenoid, BiMotor, PhasedMotor
 IS_THREADED = True
 try:
     from threading import Thread
@@ -66,27 +66,36 @@ class Drivetrain:
         commands = []
         for _ in self._motors:
             commands.append(0)
-        self.go(commands, 0)
+        self.go(commands)
 
-    def go(self, aux, init=2):
+    def go(self, cmds, smooth=True):
         """A helper function to the child classes to handle extra periphial motors attached to the
         `Drivetrain` object. This is only useful for motors that serve a specialized purpose
         other than propulsion.
 
-        :param list,tuple aux: A `list` or `tuple` of `int` motor input values to be passed in
+        :param list,tuple cmds: A `list` or `tuple` of `int` motor input values to be passed in
             corresponding order to the motors. Each input value must be on range [-65535, 65535].
 
-        :param int init: The index of the `list`/`tuple` of motor commends from which to start
-            passing values to the corresponding motors.
+        :param bool smooth: This controls the motors' built-in algorithm that smooths input values
+            over a period of time (in milliseconds) contained in the motors'
+            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. This defaults to `True`.
+            Optionally, if the :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute is set to
+            ``0`` then, the smoothing algorithm is automatically bypassed despite this parameter's
+            value.
 
+            .. note:: Assert this parameter (set as `True`) for robots with a rather high center of
+                gravity or if some parts are poorly attached. The absence of properly smoothed
+                acceleration/deceleration will likely make the robot fall over or loose parts
+                become dislodged on sudden and drastic changes in speed.
         """
-        self._prev_cmds = aux
-        if len(aux) > init:
-            for i in range(init, len(aux)):
-                if i < len(self._motors):
-                    self._motors[i].value = aux[i]
+        self._prev_cmds = cmds
+        for i, cmd in enumerate(cmds):
+            if i < len(self._motors):
+                if smooth:
+                    # if input is getting smoothed
+                    self._motors[i].cellerate(cmd)
                 else:
-                    print('motor[{}] not declared and/or installed'.format(i))
+                    self._motors[i].value = cmd
 
     @property
     def value(self):
@@ -135,7 +144,6 @@ class Tank(Drivetrain):
     :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
-
     """
 
     def __init__(self, motors, max_speed=100):
@@ -169,7 +177,6 @@ class Tank(Drivetrain):
                 gravity or if some parts are poorly attached. The absence of properly smoothed
                 acceleration/deceleration will likely make the robot fall over or loose parts
                 become dislodged on sudden and drastic changes in speed.
-
         """
         if len(cmds) < 2:
             raise ValueError("the list of commands must be at least 2 items long")
@@ -197,15 +204,7 @@ class Tank(Drivetrain):
             elif cmds[0] < 0:
                 left *= offset
         # send translated commands to motors
-        if smooth:
-            # if input is getting smoothed
-            self._motors[0].cellerate(left * 655.35)
-            self._motors[1].cellerate(right * 655.35)
-        else:
-            self._motors[0].value = left * 655.35
-            self._motors[1].value = right * 655.35
-        super().go(cmds)
-
+        super().go([left, right], smooth)
 
 class Automotive(Drivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
@@ -220,9 +219,7 @@ class Automotive(Drivetrain):
     :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
-
     """
-
     def __init__(self, motors, max_speed=100):
         if len(motors) != 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
@@ -254,7 +251,6 @@ class Automotive(Drivetrain):
                 gravity or if some parts are poorly attached. The absence of properly smoothed
                 acceleration/deceleration will likely make the robot fall over or loose parts
                 become dislodged on sudden and drastic changes in speed.
-
         """
         if len(cmds) < 2:
             raise ValueError("the list of commands must be at least 2 items long")
@@ -264,57 +260,7 @@ class Automotive(Drivetrain):
         if abs(cmds[1]) > self._max_speed * 655.35:
             cmds[1] = self._max_speed * (655.35 if cmds[1] > 0 else -655.35)
         # send commands to motors
-        if smooth:
-            # if input is getting smoothed
-            self._motors[0].cellerate(cmds[0])
-            self._motors[1].cellerate(cmds[1])
-        else:
-            self._motors[0].value = cmds[0]
-            self._motors[1].value = cmds[1]
-        super().go(cmds)
-# end Automotive drivetrain class
-
-class External:
-    """A class to be used for controlling drivetrains not physically attached to the host
-    controller. Currently only supports USB (Serial) and nRF24L01 (an spi based radio transceiver)
-    as interfaces. Other interface options are being considered, like the RFM69 radio, and a
-    customized Arduino/CircuitPython device to acts as a slave I2C/SPI device.
-
-    :param ~motor.USB,~motor.NRF24L01 interface: The specialized interface type used to remotely
-        control an external drivetrain.
-
-    .. warning:: This class is HIGHLY EXPERIMENTAL, and needs battlehardening. At this stage of
-        development, our only working solution involves separate libraries (written in python or
-        Arduino flavored C++) that acts as a counterpart to the interface specified here, but
-        nothing has been finalized yet.
-
-    """
-
-    def __init__(self, interface):
-        if isinstance(interface, (USB, NRF24L01)):
-            self._interface = interface
-        else:
-            raise ValueError('The "External" drivetrain class only supports interfaces of type'
-                             ' class USB or NRF24L01')
-        self._prev_cmds = []
-
-    @property
-    def value(self):
-        return self._prev_cmds
-
-    def go(self, cmds):
-        """This function simply passes motor control commands to the specified ``interface``
-        (passed to the construstor).
-
-        .. important:: The receiving interface will be running code not found in this library. It
-            is up to you write that code. We are currently still testing this feature with another
-            library meant to act as a counterpart. Links and docs will be provided when stable
-            enough for pre-release; please be patient and `stay tuned to this issue.
-            <https://github.com/DVC-Viking-Robotics/Drivetrain/issues/3>`_
-
-        """
-        self._prev_cmds = cmds
-        self._interface.go(cmds)
+        super().go(cmds, smooth)
 
 class Locomotive(Drivetrain):
     """This class relies soley on one `Solenoid` object controlling 2 solenoids in tandem. Like
@@ -333,9 +279,7 @@ class Locomotive(Drivetrain):
         at all. We currently are not supporting dynamic linear actuators (in which the force
         applied can vary) because they are basically motors simulating linear motion via a gear box
         controlling a shaft's extension/retraction. This may change when we support servos though.
-
     """
-
     def __init__(self, solenoids, switch):
         super(Locomotive, self).__init__([solenoids])
         self._switch = DigitalInOut(switch)
@@ -370,7 +314,6 @@ class Locomotive(Drivetrain):
             other words, the armature of one solenoid should be attached to the wheel(s) or
             axle(s) in a position that is always opposite the position of the other solenoid's
             armature on the same wheel(s) or axel(s).
-
         """
         self._is_forward = forward
         self._is_in_motion = True

@@ -63,7 +63,6 @@ class Solenoid:
         `BiMotor` & `PhasedMotor` as it has no affect on objects instantiated with this base class.
         Changing this value has not been tested and will probably slightly delay the
         solenoid(s) outputs.
-
     """
     def __init__(self, pins, ramp_time=0):
         if not pins:
@@ -95,7 +94,6 @@ class Solenoid:
             maximum time it takes for the motor to go from full reverse to full forward and vice
             versa. If the motor is going from rest to either full reverse or full forward, then
             the time it takes to do that will be half of this attribute's value.
-
         """
         return self._dt
 
@@ -144,9 +142,7 @@ class Solenoid:
     @property
     def is_cellerating(self):
         """This attribute contains a `bool` indicating if the motor's speed is in the midst of
-            changing. (read-only)
-
-        """
+        changing. (read-only)"""
         if self._smoothing_thread is not None:
             return self._smoothing_thread.is_alive()
         return self._target_speed != self.value
@@ -157,7 +153,6 @@ class Solenoid:
 
         :param int target_speed: The desired target speed in range of [-65535, 65535]. Any invalid
             inputs will be clamped to an `int` value in the proper range.
-
         """
         self._target_speed = max(-65535, min(65535, int(target_speed)))
         # integer of milliseconds
@@ -181,7 +176,6 @@ class Solenoid:
             the solenoid driven by the second pin . Any positive value will only energize the
             solenoid driven by the first pin. Alternatively, a ``0`` value will de-energize both
             solenoids.
-
         """
         return self._signals[0].value or self._signals[1].value if \
             len(self._signals) > 1 else self._signals[0].value
@@ -235,7 +229,6 @@ class BiMotor(Solenoid):
         either full reverse or full forward, then the time it takes to do that will be half of
         this parameter's value. This can be changed at any time by changing the `ramp_time`
         attribute.
-
     """
     def __init__(self, pins, ramp_time=500):
         super(BiMotor, self).__init__(pins, ramp_time)
@@ -299,7 +292,6 @@ class PhasedMotor(Solenoid):
         either full reverse or full forward, then the time it takes to do that will be half of
         this parameter's value. This can be changed at any time by changing the `ramp_time`
         attribute.
-
     """
     def __init__(self, pins, ramp_time=500):
         if len(pins) != 2:
@@ -335,79 +327,3 @@ class PhasedMotor(Solenoid):
             self._signals[0].value = False
             self._signals[1].duty_cycle = 0
 # end PhasedMotor child class
-
-class NRF24L01():
-    """This class acts as a wrapper for circuitpython-nrf24l01 module to remotely control a
-    peripheral device using nRF24L01 radio transceivers.
-
-    :param ~busio.SPI spi: The object of the SPI bus used to connect to the nRF24L01 transceiver.
-
-        .. note:: This object should be shared among other driver classes that connect to different
-            devices on the same SPI bus (SCK, MOSI, & MISO pins)
-
-    :param list,tuple pins: A `list` or `tuple` of (`board` module's) digital output pins that
-        are connected to the nRF24L01's CSN and CE pins respectively. The length of this `list`
-        /`tuple` must be 2, otherwise a `ValueError` exception is thrown.
-
-    :param bytearray address: This will be the RF address used to transmit to the receiving
-        nRF24L01 transceiver. For more information on this parameter's usage, please read the
-        documentation on the using the `circuitpython-nrf24l01 library
-        <https://circuitpython-nrf24l01.rtfd.io/en/latest/api.html>`_
-
-    """
-    def __init__(self, spi, pins, address=b'rfpi0'):
-        if not isinstance(pins, (list, tuple)) and len(pins) != 2:
-            raise ValueError('pins parameter must be a list of length 2 (CE and CSN respectively)')
-        if not isinstance(spi, SPI):
-            raise ValueError('spi parameter must be an object of type busio.SPI')
-        csn = DigitalInOut(pins[0]) # CSN
-        ce = DigitalInOut(pins[1]) # CE
-        self._rf = RF24(spi, csn, ce)
-        self._rf.open_tx_pipe(address)
-        # self._rf.what_happened(1) # prints radio condition
-
-    def go(self, cmds):
-        """Assembles a bytearray to be used for transmitting commands over the air to a receiving
-        nRF24L01 transceiver.
-
-        :param list,tuple cmds: A `list` or `tuple` of `int` commands to be sent over the air
-            using the nRF24L01. This `list`/`tuple` can have any length (at least 1) as needed.
-
-        """
-        command = b''
-        for cmd in cmds:
-            command += bytes([cmd])
-        print('transmit', repr(cmds), 'returned:', self._rf.send(command))
-
-
-class USB():
-    """
-    This class acts as a wrapper to pyserial module for communicating to an external USB serial
-    device. Specifically designed for an Arduino running custom code.
-
-    :param string address: The serial port address of the external serial device.
-    :param int baud: The specific baudrate to be used for the serial connection. If left
-        unspecified, the serial library will assume a baudrate of 9600.
-
-    """
-    def __init__(self, address='/dev/ttyUSB0', baud=-1):
-        try:
-            if baud < 0:
-                self._ser = serial.Serial(address)
-            else:
-                self._ser = serial.Serial(address, baud)
-            print('Successfully opened port {} @ {} to Arduino device'.format(address, baud))
-        except serial.SerialException:
-            raise ValueError('unable to open serial arduino device @ port {}'.format(address))
-
-    def go(self, cmds):
-        """Assembles an encoded bytearray for outputting over the Serial connection.
-
-        :param list,tuple cmds: A `list` or `tuple` of `int` commands to be sent over the Serial
-            connection. This `list`/`tuple` can have any length (at least 1) as needed.
-
-        """
-        command = b''
-        for cmd in cmds:
-            command += bytes([cmd])
-        self._ser.write(command)
