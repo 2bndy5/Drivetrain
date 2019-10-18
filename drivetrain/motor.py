@@ -63,7 +63,6 @@ class Solenoid:
         `BiMotor` & `PhasedMotor` as it has no affect on objects instantiated with this base class.
         Changing this value has not been tested and will probably slightly delay the
         solenoid(s) outputs.
-
     """
     def __init__(self, pins, ramp_time=0):
         if not pins:
@@ -95,7 +94,6 @@ class Solenoid:
             maximum time it takes for the motor to go from full reverse to full forward and vice
             versa. If the motor is going from rest to either full reverse or full forward, then
             the time it takes to do that will be half of this attribute's value.
-
         """
         return self._dt
 
@@ -144,9 +142,7 @@ class Solenoid:
     @property
     def is_cellerating(self):
         """This attribute contains a `bool` indicating if the motor's speed is in the midst of
-            changing. (read-only)
-
-        """
+        changing. (read-only)"""
         if self._smoothing_thread is not None:
             return self._smoothing_thread.is_alive()
         return self._target_speed != self.value
@@ -157,7 +153,6 @@ class Solenoid:
 
         :param int target_speed: The desired target speed in range of [-65535, 65535]. Any invalid
             inputs will be clamped to an `int` value in the proper range.
-
         """
         self._target_speed = max(-65535, min(65535, int(target_speed)))
         # integer of milliseconds
@@ -181,7 +176,6 @@ class Solenoid:
             the solenoid driven by the second pin . Any positive value will only energize the
             solenoid driven by the first pin. Alternatively, a ``0`` value will de-energize both
             solenoids.
-
         """
         return self._signals[0].value or self._signals[1].value if \
             len(self._signals) > 1 else self._signals[0].value
@@ -235,7 +229,6 @@ class BiMotor(Solenoid):
         either full reverse or full forward, then the time it takes to do that will be half of
         this parameter's value. This can be changed at any time by changing the `ramp_time`
         attribute.
-
     """
     def __init__(self, pins, ramp_time=500):
         super(BiMotor, self).__init__(pins, ramp_time)
@@ -299,7 +292,6 @@ class PhasedMotor(Solenoid):
         either full reverse or full forward, then the time it takes to do that will be half of
         this parameter's value. This can be changed at any time by changing the `ramp_time`
         attribute.
-
     """
     def __init__(self, pins, ramp_time=500):
         if len(pins) != 2:

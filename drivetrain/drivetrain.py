@@ -32,7 +32,7 @@ configurations for the raspberry pi. Currently only supporting the R2D2 (aliased
 # pylint: disable=arguments-differ,invalid-name
 from digitalio import DigitalInOut
 from .stepper import StepperMotor
-from .motor import Solenoid, BiMotor, PhasedMotor, NRF24L01, USB
+from .motor import Solenoid, BiMotor, PhasedMotor
 IS_THREADED = True
 try:
     from threading import Thread
@@ -87,8 +87,6 @@ class Drivetrain:
                 gravity or if some parts are poorly attached. The absence of properly smoothed
                 acceleration/deceleration will likely make the robot fall over or loose parts
                 become dislodged on sudden and drastic changes in speed.
-
-
         """
         self._prev_cmds = cmds
         for i, cmd in enumerate(cmds):
@@ -146,7 +144,6 @@ class Tank(Drivetrain):
     :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
-
     """
 
     def __init__(self, motors, max_speed=100):
@@ -180,7 +177,6 @@ class Tank(Drivetrain):
                 gravity or if some parts are poorly attached. The absence of properly smoothed
                 acceleration/deceleration will likely make the robot fall over or loose parts
                 become dislodged on sudden and drastic changes in speed.
-
         """
         if len(cmds) < 2:
             raise ValueError("the list of commands must be at least 2 items long")
@@ -223,9 +219,7 @@ class Automotive(Drivetrain):
     :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
-
     """
-
     def __init__(self, motors, max_speed=100):
         if len(motors) != 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
@@ -257,7 +251,6 @@ class Automotive(Drivetrain):
                 gravity or if some parts are poorly attached. The absence of properly smoothed
                 acceleration/deceleration will likely make the robot fall over or loose parts
                 become dislodged on sudden and drastic changes in speed.
-
         """
         if len(cmds) < 2:
             raise ValueError("the list of commands must be at least 2 items long")
@@ -286,9 +279,7 @@ class Locomotive(Drivetrain):
         at all. We currently are not supporting dynamic linear actuators (in which the force
         applied can vary) because they are basically motors simulating linear motion via a gear box
         controlling a shaft's extension/retraction. This may change when we support servos though.
-
     """
-
     def __init__(self, solenoids, switch):
         super(Locomotive, self).__init__([solenoids])
         self._switch = DigitalInOut(switch)
@@ -323,7 +314,6 @@ class Locomotive(Drivetrain):
             other words, the armature of one solenoid should be attached to the wheel(s) or
             axle(s) in a position that is always opposite the position of the other solenoid's
             armature on the same wheel(s) or axel(s).
-
         """
         self._is_forward = forward
         self._is_in_motion = True

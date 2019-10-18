@@ -29,11 +29,36 @@ Locomotive Drivetrain
 .. autoclass:: drivetrain.drivetrain.Locomotive
     :members:
 
-External Drivetrain
--------------------
+Drivetrain Interfaces
+======================
 
-.. autoclass:: drivetrain.drivetrain.External
+NRF24L01
+---------
+
+.. autoclass:: drivetrain.interfaces.NRF24L01
     :members:
+
+.. autoclass:: drivetrain.interfaces.NRF24L01tx
+    :members:
+    :show-inheritance:
+
+.. autoclass:: drivetrain.interfaces.NRF24L01rx
+    :members:
+    :show-inheritance:
+
+USB
+-----
+
+.. autoclass:: drivetrain.interfaces.USB
+    :members:
+
+.. autoclass:: drivetrain.interfaces.USBtx
+    :members:
+    :show-inheritance:
+
+.. autoclass:: drivetrain.interfaces.USBrx
+    :members:
+    :show-inheritance:
 
 Motor Types
 ===================
@@ -62,16 +87,4 @@ StepperMotor
 ----------------
 
 .. autoclass:: drivetrain.stepper.StepperMotor
-    :members:
-
-nRF24L01 Interface
-------------------
-
-.. autoclass:: drivetrain.motor.NRF24L01
-    :members:
-
-USB Interface
-------------------
-
-.. autoclass:: drivetrain.motor.USB
     :members:

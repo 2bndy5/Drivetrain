@@ -1,5 +1,20 @@
 """to simplify importing objects across all modules"""
-from .drivetrain import Tank, Automotive, Locomotive, External
-from .motor import Solenoid, BiMotor, PhasedMotor, NRF24L01, USB
+from .drivetrain import Tank, Automotive, Locomotive
+from .motor import Solenoid, BiMotor, PhasedMotor
+from .interfaces import NRF24L01, NRF24L01tx, NRF24L01rx, USB, USBtx, USBrx
 from .stepper import StepperMotor
-__all__ = ['Tank', 'Automotive', 'Locomotive', 'External', 'Solenoid', 'BiMotor', 'PhasedMotor', 'StepperMotor', 'NRF24L01', 'USB']
+__all__ = [
+    'Tank',
+    'Automotive',
+    'Locomotive',
+    'Solenoid',
+    'BiMotor',
+    'PhasedMotor',
+    'StepperMotor',
+    'NRF24L01',
+    'NRF24L01tx',
+    'NRF24L01rx',
+    'USB',
+    'USBtx',
+    'USBrx'
+]
