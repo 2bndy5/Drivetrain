@@ -69,8 +69,8 @@ class NRF24L01rx(NRF24L01):
     """This child class allows the external remote controlling of an internal drivetrain by
     receiving commands from another MCU via the nRF24L01 transceiver.
     
-    :param :class:~drivetrain.drivetrain.Tank,:class:~drivetrain.drivetrain.Automotive, :class:~drivetrain.drivetrain.Locomotive drivetrain: The pre-instantiated drivetrain
-        configuration object that is to be controlled.
+    :param Tank,Automotive,Locomotive drivetrain: The
+        pre-instantiated drivetrain configuration object that is to be controlled.
 
     See also the :class:`~drivetrain.interfaces.NRF24L01` base class for details about instantiation.
     """
@@ -142,8 +142,8 @@ class USBrx(USB):
     """This child class allows the remote controlling of an external drivetrain by receiving
     commands from another MCU via USB serial connection.
     
-    :param :class:~drivetrain.drivetrain.Tank,:class:~drivetrain.drivetrain.Automotive,:class:~drivetrain.drivetrain.Locomotive drivetrain: The pre-instantiated drivetrain
-        configuration object that is to be controlled.
+    :param Tank,Automotive,Locomotive drivetrain: The
+        pre-instantiated drivetrain configuration object that is to be controlled.
 
     See also the :class:`~drivetrain.interfaces.USB` base class for details about instantiation.
     """
