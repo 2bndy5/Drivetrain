@@ -267,7 +267,7 @@ class Locomotive(Drivetrain):
     with a locomotive train, applied force is alternated between the 2 solenoids using a
     boolean-ized pressure sensor or switch to determine when the applied force is alternated.
 
-    :param ~derivetrain.motor.Solenoid solenoids: This object has 1 or 2 solenoids attached. It
+    :param ~drivetrain.motor.Solenoid solenoids: This object has 1 or 2 solenoids attached. It
         will be used to apply the force for propulsion.
 
     :param ~microcontroller.Pin switch: This should be the (`board` module's) pin that is connected
