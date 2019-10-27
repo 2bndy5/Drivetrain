@@ -29,6 +29,13 @@ Locomotive Drivetrain
 .. autoclass:: drivetrain.drivetrain.Locomotive
     :members:
 
+Mecanum Drivetrain
+---------------------
+
+.. autoclass:: drivetrain.drivetrain.Mecanum
+    :members:
+    :inherited-members:
+
 Drivetrain Interfaces
 ======================
 
