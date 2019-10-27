@@ -145,7 +145,6 @@ class Tank(Drivetrain):
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
     """
-
     def __init__(self, motors, max_speed=100):
         if len(motors) != 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
@@ -345,3 +344,82 @@ class Locomotive(Drivetrain):
         if self._moving_thread is not None or self._is_in_motion:
             return True
         return False
+
+class Mecanum(Drivetrain):
+    """A Drivetrain class meant for motor configurations that involve 4 motors for propulsion
+    and steering are shared tasks (like having 2 Tank Drivetrains). Each motor drives a single
+    mecanum wheel which allows for the ability to strafe.
+
+    :param list motors: A `list` of motors that are to be controlled in concert. Each item in this
+        `list` represents a single motor object and must be of type `Solenoid`, `BiMotor`,
+        `PhasedMotor`, or `StepperMotor`. The first 2 motors in this `list` are used to propell and
+        steer respectively.
+
+    :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
+        forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
+        it just limits the top speed that the forward/backward motion can go.
+    """
+    def __init__(self, motors, max_speed=100):
+        if len(motors) != 4:
+            raise ValueError('The drivetrain requires 4 motors to operate.')
+        super(Mecanum, self).__init__(motors, max_speed=max_speed)
+
+    def go(self, cmds, smooth=True):
+        """This function applies the user input to the motors' output according to drivetrain's
+        motor configuration stated in the contructor documentation.
+
+        :param list cmds: A `list` of input motor commands to be processed and
+            passed to the motors. This list must have at least 2 items (input values), and any
+            additional items will be ignored. A `list` of length less than 2 will throw a
+            `ValueError` exception.
+
+            .. important:: Ordering of the motor inputs contained in this list/tuple matters. They
+                should correspond to the following order:
+
+                1. left/right magnitude in range [-65535, 65535]
+                2. forward/reverse magnitude in range [-65535, 65535]
+                3. strafe boolean. `True` uses the left/right magnituse as strafing speed. `False`
+                   uses the left/right magnitude for turning.
+
+        :param bool smooth: This controls the motors' built-in algorithm that smooths input values
+            over a period of time (in milliseconds) contained in the motors'
+            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. This defaults to `True`.
+            Optionally, if the :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute is set to
+            ``0`` then, the smoothing algorithm is automatically bypassed despite this parameter's
+            value.
+
+            .. note:: Assert this parameter (set as `True`) for robots with a rather high center of
+                gravity or if some parts are poorly attached. The absence of properly smoothed
+                acceleration/deceleration will likely make the robot fall over or loose parts
+                become dislodged on sudden and drastic changes in speed.
+        """
+        if len(cmds) < 3:
+            raise ValueError("the list of commands must be at least 3 items long")
+        cmds[0] = max(-65535, min(65535, int(cmds[0])))
+        cmds[1] = max(-65535, min(65535, int(cmds[1])))
+        # apply speed governor
+        if abs(cmds[1]) > self._max_speed * 655.35:
+            cmds[1] = self._max_speed * (655.35 if cmds[1] > 0 else -655.35)
+        # assuming left/right axis is null (just going forward or backward)
+        left = cmds[1]
+        right = cmds[1]
+        if not cmds[1]:
+            # if forward/backward axis is null ("turning on a dime" functionality)
+            # re-apply speed governor to only axis with a non-zero value
+            if abs(cmds[0]) > self._max_speed * 655.35:
+                cmds[0] = self._max_speed * (655.35 if cmds[0] > 0 else -655.35)
+            right = cmds[0]
+            left = cmds[0] * -1
+        else:
+            # if forward/backward axis is not null and left/right axis is not null
+            # apply differential to motors accordingly
+            offset = (65535 - abs(cmds[0])) / 65535.0
+            if cmds[0] > 0:
+                right *= offset
+            elif cmds[0] < 0:
+                left *= offset
+        # send translated commands to motors
+        if cmds[2]:
+            super().go([left, right, left * -1, right * -1], smooth)
+        else:
+            super().go([left, right, left, right], smooth)
