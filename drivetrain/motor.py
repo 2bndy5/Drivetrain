@@ -30,7 +30,6 @@ module. Includes Solenoid (parent base class), BiMotor & PhasedMotor (children o
 """
 from math import pi as PI, cos
 import time
-import serial
 from digitalio import DigitalInOut
 from busio import SPI
 from circuitpython_nrf24l01 import RF24
@@ -232,9 +231,9 @@ class BiMotor(Solenoid):
     """
     def __init__(self, pins, ramp_time=500):
         super(BiMotor, self).__init__(pins, ramp_time)
-        for signal in self._signals:
-            signal.deinit()
-        self._signals.clear()
+        for i in range(len(self._signals) - 1, -1, -1):
+            self._signals[i].deinit()
+            del self._signals[i]
         for pin in pins:
             if len(self._signals) == 2:
                 break
@@ -300,7 +299,7 @@ class PhasedMotor(Solenoid):
         # free up the 2nd digital pin from parent's declaration
         self._signals[1].deinit()
         # remove 2nd pin from list and re-append it as PWMOut object
-        self._signals.pop()
+        del self._signals[1]
         self._signals.append(PWMOut(pins[1]))
 
     @property

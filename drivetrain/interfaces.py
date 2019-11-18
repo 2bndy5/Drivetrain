@@ -2,8 +2,12 @@
 A colection of controlling interfaces for drivetrains (both external and internal).
 
 """
-
-from serial import Serial
+PYSERIAL = True
+try:
+    from serial import Serial
+except ImportError:
+    PYSERIAL = False
+    from busio import UART
 from busio import SPI
 from digitalio import DigitalInOut
 from circuitpython_nrf24l01 import RF24
@@ -68,7 +72,7 @@ class NRF24L01tx(NRF24L01):
 class NRF24L01rx(NRF24L01):
     """This child class allows the external remote controlling of an internal drivetrain by
     receiving commands from another MCU via the nRF24L01 transceiver.
-    
+
     :param Tank,Automotive,Locomotive drivetrain: The
         pre-instantiated drivetrain configuration object that is to be controlled.
 
@@ -89,7 +93,7 @@ class NRF24L01rx(NRF24L01):
         """Assembles a list of drivetrain commands from the received bytearray via the nRF24L01
         transceiver.
 
-        :param list,tuple cmds: A `list` or `tuple` of `int` commands to be sent the 
+        :param list,tuple cmds: A `list` or `tuple` of `int` commands to be sent the
             drivetrain object (passed to the constructor upon instantiation). This `list`/`tuple`
             can have any length (at least 1) as needed.
         """
@@ -101,15 +105,11 @@ class USB():
     This base class acts as a wrapper to pyserial module for communicating to an external USB
     serial device. Specifically designed for an Arduino running custom code.
 
-    :param string address: The serial port address of the external USB serial device.
-    :param int baud: The specific baudrate to be used for the serial connection. If left
-        unspecified, the default baudrate of 9600 is used.
-    :param int timeout: Specific number of seconds till the threading
-        :class:`~serial.Serial`'s :func:`~serial.Serial.read_until()` operation expires. Defaults
-        to 1 second.
+    :param ~busio.UART,~serial.Serial serial_object: The instantiated serial object to be used for
+        the serial connection.
     """
-    def __init__(self, address='/dev/ttyUSB0', baud=9600, timeout=1.0):
-        self._ser = Serial(address=address, baud=baud, timeout=timeout)
+    def __init__(self, serial_object):
+        self._ser = serial_object
         # print('Successfully opened port {} @ {} to Arduino device'.format(address, baud))
         self._ser.close()
         self._prev_cmds = [None, None]
@@ -135,29 +135,35 @@ class USBtx(USB):
             commands += bytes([cmd])
             if i + 1 < len(cmds):
                 commands += ' '
-        with self._ser as usb:
-            usb.write(commands)
+        with self._ser:
+            self._ser.write(commands)
 
 class USBrx(USB):
     """This child class allows the remote controlling of an external drivetrain by receiving
     commands from another MCU via USB serial connection.
-    
+
     :param Tank,Automotive,Locomotive drivetrain: The
         pre-instantiated drivetrain configuration object that is to be controlled.
 
     See also the :class:`~drivetrain.interfaces.USB` base class for details about instantiation.
     """
-    def __init__(self, drivetrain, address='/dev/ttyUSB0', baud=9600):
+    def __init__(self, drivetrain, serial_object):
         self._d_train = drivetrain
-        super(USBrx, self).__init__(address=address, baud=baud)
+        super(USBrx, self).__init__(serial_object=serial_object)
 
     def sync(self):
         """Checks if there are new commands waiting in the USB serial device's input stream to be
         processed by the drivetrain object (passed to the constructor upon instantiation)."""
         commands = []
-        with self._ser as usb:
-            if usb.in_waiting:
-                commands = usb.read_until().rsplit(' ')
+        with self._ser:
+            if self._ser.in_waiting:
+                if PYSERIAL:
+                    # pyserial object doesn't use internal timeout value for read_line()
+                    commands = self._ser.read_until() # defaults to '\n' character
+                else:
+                    commands = self._ser.read_line()
+                commands = ''.join([chr(b) for b in commands])
+                commands = commands.rsplit(' ')
         for i in range(len(commands)):
             commands[i] = int(commands[i])
         if len(commands):
@@ -167,7 +173,7 @@ class USBrx(USB):
         """Assembles a list of drivetrain commands from the received bytearray over the USB
         serial connection.
 
-        :param list,tuple cmds: A `list` or `tuple` of `int` commands to be sent the 
+        :param list,tuple cmds: A `list` or `tuple` of `int` commands to be sent the
             drivetrain object (passed to the constructor upon instantiation). This `list`/`tuple`
             can have any length (at least 1) as needed.
         """

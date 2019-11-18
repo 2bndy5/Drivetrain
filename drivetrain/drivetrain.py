@@ -352,8 +352,12 @@ class Mecanum(Drivetrain):
 
     :param list motors: A `list` of motors that are to be controlled in concert. Each item in this
         `list` represents a single motor object and must be of type `Solenoid`, `BiMotor`,
-        `PhasedMotor`, or `StepperMotor`. The first 2 motors in this `list` are used to propell and
-        steer respectively.
+        `PhasedMotor`, or `StepperMotor`. The motors `list` should be ordered as follows:
+
+            * Front-Right
+            * Rear-Right
+            * Rear-Left
+            * Front-Left
 
     :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
@@ -420,6 +424,6 @@ class Mecanum(Drivetrain):
                 left *= offset
         # send translated commands to motors
         if cmds[2]:
-            super().go([left, right, left * -1, right * -1], smooth)
+            super().go([left, left * -1, right * -1, right], smooth)
         else:
-            super().go([left, right, left, right], smooth)
+            super().go([left, left, right, right], smooth)
