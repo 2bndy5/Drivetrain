@@ -6,10 +6,11 @@ PYSERIAL = True
 try:
     from serial import Serial
 except ImportError:
-    PYSERIAL = False
-    from busio import UART
-from busio import SPI
-from digitalio import DigitalInOut
+    PYSERIAL = False # not running on Win32 nor Linux
+    try:
+        from busio import UART as Serial
+    except ImportError: # running on a MicroPython board
+        from .uart_serial_ctx import SerialUART as Serial
 from circuitpython_nrf24l01 import RF24
 
 class NRF24L01():
@@ -18,30 +19,20 @@ class NRF24L01():
     :class:`~drivetrain.interfaces.NRF24L01tx` and :class:`~drivetrain.interfaces.NRF24L01rx`
     classes.
 
-    :param ~busio.SPI spi: The object of the SPI bus used to connect to the nRF24L01 transceiver.
-
-        .. note:: This object should be shared among other driver classes that connect to different
-            devices on the same SPI bus (SCK, MOSI, & MISO pins)
-
-    :param list,tuple pins: A `list` or `tuple` of (`board` module's) digital output pins that
-        are connected to the nRF24L01's CSN and CE pins respectively. The length of this `list`
-        /`tuple` must be 2, otherwise a `ValueError` exception is thrown.
-
+    :param ~circuitpython_nrf24l01.RF24 nrf24_object: The instantiated object of the nRF24L01
+        transceiver radio.
     :param bytearray address: This will be the RF address used to transmit to the receiving
         nRF24L01 transceiver. For more information on this parameter's usage, please read the
         documentation on the using the `circuitpython-nrf24l01 library
         <https://circuitpython-nrf24l01.rtfd.io/en/latest/api.html>`_
     """
-    def __init__(self, spi, pins, address=b'rfpi0'):
-        if not isinstance(pins, (list, tuple)) and len(pins) != 2:
-            raise ValueError('pins parameter must be a list of length 2 (CE and CSN respectively)')
-        if not isinstance(spi, SPI):
+    def __init__(self, nrf24_object, address=b'rfpi0'):
+        if not isinstance(nrf24_object, RF24):
             raise ValueError('spi parameter must be an object of type busio.SPI')
-        csn = DigitalInOut(pins[0]) # CSN
-        ce = DigitalInOut(pins[1]) # CE
-        self._rf = RF24(spi, csn, ce)
-        self._rf.open_tx_pipe(address)
-        self._rf.open_rx_pipe(1, address)
+        self._rf = nrf24_object
+        self._address = address
+        self.address = address
+        self._rf.listen = False
         # self._rf.what_happened(1) # prints radio condition
         self._prev_cmds = [None, None]
 
@@ -49,6 +40,16 @@ class NRF24L01():
     def value(self):
         """The most previous list of commands that were processed by the drivetrain object"""
         return self._prev_cmds
+
+    @property
+    def address(self):
+        return self._address
+
+    @address.setter
+    def address(self, address):
+        self._address = address
+        self._rf.open_tx_pipe(address)
+        self._rf.open_rx_pipe(1, address)
 
 class NRF24L01tx(NRF24L01):
     """This child class allows the remote controlling of an external drivetrain by transmitting
@@ -78,9 +79,9 @@ class NRF24L01rx(NRF24L01):
 
     See also the :class:`~drivetrain.interfaces.NRF24L01` base class for details about instantiation.
     """
-    def __init__(self, spi, pins, drivetrain, address=b'rfpi0'):
+    def __init__(self, nrf24_object, drivetrain, address=b'rfpi0'):
         self._d_train = drivetrain
-        super(NRF24L01rx, self).__init__(spi, pins, address=b'rfpi0')
+        super(NRF24L01rx, self).__init__(nrf24_object, address=b'rfpi0')
         self._rf.listen = True
 
     def sync(self):
@@ -105,13 +106,18 @@ class USB():
     This base class acts as a wrapper to pyserial module for communicating to an external USB
     serial device. Specifically designed for an Arduino running custom code.
 
-    :param ~busio.UART,~serial.Serial serial_object: The instantiated serial object to be used for
+    :param ~busio.UART,~serial.Serial,~machine.UART serial_object: The instantiated serial object to be used for
         the serial connection.
     """
     def __init__(self, serial_object):
+        if not isinstance(serial_object, Serial):
+            raise ValueError("serial_object not recognized or unsupported")
         self._ser = serial_object
         # print('Successfully opened port {} @ {} to Arduino device'.format(address, baud))
-        self._ser.close()
+        if PYSERIAL:
+            self._ser.close()
+        else:
+            self._ser.deinit()
         self._prev_cmds = [None, None]
 
     @property

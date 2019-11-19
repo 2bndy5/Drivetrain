@@ -1,11 +1,16 @@
 """PWMOut class as an alternative to circuitpython's pulseio.PWMOut due to lack of support on the
-Raspberry Pi and the Jetson"""
+Raspberry Pi and the Jetson and various MicroPython compatible boards"""
 # pylint: disable=import-error
-import RPi.GPIO as GPIO
-GPIO.setmode(GPIO.BCM)
-# GPIO.setwarnings(False) # unadvised due to thread priority
+MICROPY = False
+try:
+    import RPi.GPIO as GPIO
+    GPIO.setmode(GPIO.BCM)
+    # GPIO.setwarnings(False) # unadvised due to thread priority
+except ImportError:
+    import machine
+    MICROPY = True
 
-# example code
+# example code for Raspberry Pi & nVidia Jetson
 # GPIO.setup(12, GPIO.OUT)
 # p = GPIO.PWM(12, 50)  # channel=12 frequency=50Hz
 # p.start(0) # init duty_cycle of 0 (max of 100)
@@ -16,6 +21,16 @@ GPIO.setmode(GPIO.BCM)
 # p.stop()
 # GPIO.cleanup(12) # this should be done on entry & exit of programs
 
+# example code for micropython boards ()
+# from machine import Pin, PWM
+# pwm0 = PWM(Pin(0))      # create PWM object from a pin
+# pwm0.freq()             # get current frequency
+# pwm0.freq(1000)         # set frequency
+# pwm0.duty()             # get current duty cycle
+# pwm0.duty(200)          # set duty cycle
+# pwm0.deinit()           # turn off PWM on the pin
+# pwm2 = PWM(Pin(2), freq=500, duty=512) # create and configure in one go
+
 class PWMOut:
     """A wrapper class to substitute the RPi.GPIO.PWM for pulseio.PWMOut
 
@@ -25,12 +40,20 @@ class PWMOut:
     """
     def __init__(self, pin, freq=500, duty_cycle=0):
         self._pin_number = int(repr(pin))
-        GPIO.cleanup(self._pin_number) # make sure to deinit pin from any previous unresolved usage
-        GPIO.setup(self._pin_number, GPIO.OUT)
+        if MICROPY:
+            if freq < 1 or freq > 1000:
+                raise ValueError('esp8266 only allows a frequency that ranges 1Hz to 1kHz')
+            self._pin = machine.PWM(
+                machine.Pin(self._pin_number),
+                freq=freq,
+                duty=int(duty_cycle * 1023 / 65535))
+        else:
+            GPIO.cleanup(self._pin_number) # make sure to deinit pin from any previous unresolved usage
+            GPIO.setup(self._pin_number, GPIO.OUT)
+            self._pin = GPIO.PWM(self._pin_number, self._frequency)
+            self._pin.start(duty_cycle / 655.35)
         self._frequency = int(freq)
-        self._pin = GPIO.PWM(self._pin_number, self._frequency)
         self._duty_cycle = int(duty_cycle)
-        self._pin.start(self._duty_cycle / 655.35)
 
     @property
     def duty_cycle(self):
@@ -40,8 +63,11 @@ class PWMOut:
     @duty_cycle.setter
     def duty_cycle(self, val):
         val = max(0, min(65535, int(val)))
+        if MICROPY:
+            self._pin.duty(int(val * 1023 / 65535))
+        else:
+            self._pin.ChangeDutyCycle(val / 655.35)
         self._duty_cycle = val
-        self._pin.ChangeDutyCycle(val / 655.35)
 
     @property
     def frequency(self):
@@ -49,14 +75,23 @@ class PWMOut:
         return self._frequency
 
     @frequency.setter
-    def frequency(self, val):
-        self._frequency = val
-        self._pin.ChangeFrequency(val)
+    def frequency(self, freq):
+        if MICROPY:
+            if freq < 1 or freq > 1000:
+                raise ValueError('esp8266 only allows a frequency that ranges 1Hz to 1kHz')
+            self._pin.freq(freq)
+        else:
+            self._pin.ChangeFrequency(freq)
+        self._frequency = freq
 
     def deinit(self):
         """de-initialize the pin for future instantiation."""
-        self._pin.stop()
-        GPIO.cleanup(self._pin_number) # make sure to deinit pin from any previous unresolved usage
+        if MICROPY:
+            self._pin.deinit()
+        else:
+            self._pin.stop()
+            # make sure to deinit pin from any previous unresolved usage
+            GPIO.cleanup(self._pin_number)
 
     def __del__(self):
         self.deinit()

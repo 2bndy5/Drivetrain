@@ -30,17 +30,24 @@ module. Includes Solenoid (parent base class), BiMotor & PhasedMotor (children o
 """
 from math import pi as PI, cos
 import time
-from digitalio import DigitalInOut
-from busio import SPI
-from circuitpython_nrf24l01 import RF24
+MICROPY = False
+try:
+    from digitalio import DigitalInOut
+except ImportError: # running on a MicroPython board
+    import machine
+    MICROPY = True
+
 IS_THREADED = True
 try:
     from threading import Thread
 except ImportError:
     IS_THREADED = False
+
+from circuitpython_nrf24l01 import RF24
+
 try:
     from pulseio import PWMOut
-except ImportError:
+except ImportError: # running on Raspberry Pi, nVidia Jetson, or a MicroPython board
     from .pwm import PWMOut
 
 # pylint: disable=too-many-instance-attributes,too-few-public-methods,invalid-name
@@ -70,8 +77,11 @@ class Solenoid:
         for i, pin in enumerate(pins):
             if i >= 2:
                 break
-            self._signals.append(DigitalInOut(pin))
-            self._signals[i].switch_to_output(False)
+            if MICROPY:
+                self._signals.append(machine.Pin(pin, machine.Pin.OUT))
+            else:
+                self._signals.append(DigitalInOut(pin))
+                self._signals[i].switch_to_output(False)
         # variables used to track acceleration
         self._init_speed = 0
         self._target_speed = 0
