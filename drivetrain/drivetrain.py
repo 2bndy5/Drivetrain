@@ -30,7 +30,12 @@ configurations for the raspberry pi. Currently only supporting the R2D2 (aliased
 
 """
 # pylint: disable=arguments-differ,invalid-name
-from digitalio import DigitalInOut
+MICROPY = False
+try:
+    from digitalio import DigitalInOut
+except ImportError:
+    import machine
+    MICROPY = True
 from .stepper import StepperMotor
 from .motor import Solenoid, BiMotor, PhasedMotor
 IS_THREADED = True
@@ -295,9 +300,9 @@ class Locomotive(Drivetrain):
     :param ~drivetrain.motor.Solenoid solenoids: This object has 1 or 2 solenoids attached. It
         will be used to apply the force for propulsion.
 
-    :param ~microcontroller.Pin switch: This should be the (`board` module's) pin that is connected
-        to the sensor that will be used to determine when the force for propulsion should be
-        alternated between solenoids.
+    :param ~microcontroller.Pin switch: This should be the (`board` module's)
+        `~microcontroller.Pin` that is connected to the sensor that will be used to determine when
+        the force for propulsion should be alternated between solenoids.
 
     .. note:: There is no option to control the speed in this drivetrain class due to the nature of
         using solenoids for propulsion. Electronic solenoids apply either their full force or none
@@ -310,8 +315,11 @@ class Locomotive(Drivetrain):
         if isinstance(solenoids, (BiMotor, PhasedMotor, StepperMotor)):
             raise ValueError('this drivetrain only uses a 1 Solenoid object')
         super(Locomotive, self).__init__([solenoids])
-        self._switch = DigitalInOut(switch)
-        self._switch.switch_to_input()
+        if MICROPY:
+            self._switch = machine.Pin(switch, machine.Pin.IN)
+        else:
+            self._switch = DigitalInOut(switch)
+            self._switch.switch_to_input()
         self._is_forward = True
         self._is_in_motion = False
         self._cancel_thread = not IS_THREADED

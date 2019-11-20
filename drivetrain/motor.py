@@ -61,8 +61,8 @@ class Solenoid:
     class can be used to control up to 2 solenoids (see also `value` attribute for more details) as
     in the case of an actual locomotive train.
 
-    :param list pins: A `list` of (`board` module's) pins that are used to drive the
-        the solenoid(s). The length of this `list` must be in range [1, 2] (any
+    :param list pins: A `list` of (`board` module's) `~microcontoller.Pin` numbers that are used to
+        drive the solenoid(s). The length of this `list` must be in range [1, 2] (any
         additional items/pins will be ignored).
 
     :param int ramp_time: This parameter is really a placeholder for the child classes
@@ -224,11 +224,11 @@ class BiMotor(Solenoid):
     . Each pin represent the controlling signal for the motor's speed in a single rotational
     direction.
 
-    :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive
-        the motor. The length of this `list` or `tuple` must be in range [1, 2]; any additional
-        items/pins will be ignored, and a `ValueError` exception is thrown if no pins are passed
-        (an empty `tuple`/`list`). If only 1 pin is passed, then the motor will only rotate in 1
-        direction depending on how the motor is connected to the motor driver.
+    :param list pins: A `list` of (`board` module's) `~microcontoller.Pin` numbers that are used to
+        drive the motor. The length of this `list` or `tuple` must be in range [1, 2]; any
+        additional items/pins will be ignored, and a `ValueError` exception is thrown if no pins
+        are passed (an empty `tuple`/`list`). If only 1 pin is passed, then the motor will only
+        rotate in 1 direction depending on how the motor is connected to the motor driver.
 
     :param int ramp_time: The time (in milliseconds) that is used to smooth the motor's input.
         Default is 500. This time represents the maximum amount of time that the input will be
@@ -285,8 +285,8 @@ class PhasedMotor(Solenoid):
         * 1 PWM output (to control the motor's speed)
         * 1 digital output (to control the motor's rotational direction)
 
-    :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive
-        the to the motor. The length of this `list`/`tuple` must be 2, otherwise a `ValueError`
+    :param list pins: A `list` of (`board` module's) `~microcontoller.Pin` numbers that are used to
+        drive the motor. The length of this `list`/`tuple` must be 2, otherwise a `ValueError`
         exception is thrown.
 
         .. note:: The first pin in the `tuple`/`list` is used for the digital output signal
