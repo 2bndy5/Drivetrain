@@ -39,8 +39,10 @@ try:
 except ImportError:
     IS_THREADED = False
 
+
 class Drivetrain:
     """A base class that is only used for inheriting various types of drivetrain configurations."""
+
     def __init__(self, motors, max_speed=100, smooth=True):
         #  prototype motors lust to avoid error in __del__ on exceptions
         self._motors = []
@@ -156,6 +158,7 @@ class Tank(Drivetrain):
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
     """
+
     def __init__(self, motors, max_speed=100):
         if len(motors) != 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
@@ -190,7 +193,8 @@ class Tank(Drivetrain):
                 become dislodged on sudden and drastic changes in speed.
         """
         if len(cmds) < 2:
-            raise ValueError("the list of commands must be at least 2 items long")
+            raise ValueError(
+                "the list of commands must be at least 2 items long")
         cmds[0] = max(-65535, min(65535, int(cmds[0])))
         cmds[1] = max(-65535, min(65535, int(cmds[1])))
         # apply speed governor
@@ -203,7 +207,8 @@ class Tank(Drivetrain):
             # if forward/backward axis is null ("turning on a dime" functionality)
             # re-apply speed governor to only axis with a non-zero value
             if abs(cmds[0]) > self._max_speed * 655.35:
-                cmds[0] = self._max_speed * (655.35 if cmds[0] > 0 else -655.35)
+                cmds[0] = self._max_speed * \
+                    (655.35 if cmds[0] > 0 else -655.35)
             right = cmds[0]
             left = cmds[0] * -1
         else:
@@ -217,23 +222,29 @@ class Tank(Drivetrain):
         # send translated commands to motors
         super().go([left, right], smooth)
 
+
 class Automotive(Drivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
     are separate tasks. The first motor is used to steer, and the second motor is used to
     propell. An example of this would be any remote control toy vehicle.
 
     :param list motors: A `list` of motors that are to be controlled in concert. Each item in this
-        `list` represents a single motor object and must be of type `Solenoid`, `BiMotor`,
-        `PhasedMotor`, or `StepperMotor`. The first 2 motors in this `list` are used to propell and
-        steer respectively.
+        `list` represents a single motor object and must be of type `Solenoid` (steering only), `BiMotor`,
+        `PhasedMotor`, or `StepperMotor`. The 2 motors in this `list` are used to steer and propell
+        respectively.
 
     :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
     """
+
     def __init__(self, motors, max_speed=100):
         if len(motors) != 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
+        if not isinstance(motors[0], (Solenoid, BiMotor, PhasedMotor, StepperMotor)):
+            raise ValueError(type(motors[0]), 'unrecognized or unsupported motor object')
+        if not isinstance(motors[1], (BiMotor, PhasedMotor, StepperMotor)):
+            raise ValueError(type(motors[1]), 'unrecognized or unsupported motor object')
         super(Automotive, self).__init__(motors, max_speed)
 
     def go(self, cmds, smooth=None):
@@ -265,7 +276,8 @@ class Automotive(Drivetrain):
                 become dislodged on sudden and drastic changes in speed.
         """
         if len(cmds) < 2:
-            raise ValueError("the list of commands must be at least 2 items long")
+            raise ValueError(
+                "the list of commands must be at least 2 items long")
         cmds[0] = max(-65535, min(65535, int(cmds[0])))
         cmds[1] = max(-65535, min(65535, int(cmds[1])))
         # apply speed governor
@@ -273,6 +285,7 @@ class Automotive(Drivetrain):
             cmds[1] = self._max_speed * (655.35 if cmds[1] > 0 else -655.35)
         # send commands to motors
         super().go(cmds, smooth)
+
 
 class Locomotive(Drivetrain):
     """This class relies soley on one `Solenoid` object controlling 2 solenoids in tandem. Like
@@ -292,7 +305,10 @@ class Locomotive(Drivetrain):
         applied can vary) because they are basically motors simulating linear motion via a gear box
         controlling a shaft's extension/retraction. This may change when we support servos though.
     """
+
     def __init__(self, solenoids, switch):
+        if isinstance(solenoids, (BiMotor, PhasedMotor, StepperMotor)):
+            raise ValueError('this drivetrain only uses a 1 Solenoid object')
         super(Locomotive, self).__init__([solenoids])
         self._switch = DigitalInOut(switch)
         self._switch.switch_to_input()
@@ -358,13 +374,14 @@ class Locomotive(Drivetrain):
             return True
         return False
 
+
 class Mecanum(Drivetrain):
     """A Drivetrain class meant for motor configurations that involve 4 motors for propulsion
     and steering are shared tasks (like having 2 Tank Drivetrains). Each motor drives a single
     mecanum wheel which allows for the ability to strafe.
 
     :param list motors: A `list` of motors that are to be controlled in concert. Each item in this
-        `list` represents a single motor object and must be of type `Solenoid`, `BiMotor`,
+        `list` represents a single motor object and must be of type `BiMotor`,
         `PhasedMotor`, or `StepperMotor`. The motors `list` should be ordered as follows:
 
             * Front-Right
@@ -376,9 +393,14 @@ class Mecanum(Drivetrain):
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
     """
+
     def __init__(self, motors, max_speed=100):
         if len(motors) != 4:
             raise ValueError('The drivetrain requires 4 motors to operate.')
+        for i, m in enumerate(motors):
+            if not isinstance(m, (BiMotor, PhasedMotor, StepperMotor)):
+                raise ValueError(
+                    'unknown motor (index {}) of type {}'.format(i, type(m)))
         super(Mecanum, self).__init__(motors, max_speed=max_speed)
 
     def go(self, cmds, smooth=None):
@@ -412,7 +434,8 @@ class Mecanum(Drivetrain):
                 become dislodged on sudden and drastic changes in speed.
         """
         if len(cmds) < 3:
-            raise ValueError("the list of commands must be at least 3 items long")
+            raise ValueError(
+                "the list of commands must be at least 3 items long")
         cmds[0] = max(-65535, min(65535, int(cmds[0])))
         cmds[1] = max(-65535, min(65535, int(cmds[1])))
         # apply speed governor
@@ -425,7 +448,8 @@ class Mecanum(Drivetrain):
             # if forward/backward axis is null
             # re-apply speed governor to only axis with a non-zero value
             if abs(cmds[0]) > self._max_speed * 655.35:
-                cmds[0] = self._max_speed * (655.35 if cmds[0] > 0 else -655.35)
+                cmds[0] = self._max_speed * \
+                    (655.35 if cmds[0] > 0 else -655.35)
             right = cmds[0]
             left = cmds[0] * -1
             if not cmds[2]:
