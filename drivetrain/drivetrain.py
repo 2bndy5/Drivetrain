@@ -408,22 +408,41 @@ class Mecanum(Drivetrain):
         left = cmds[1]
         right = cmds[1]
         if not cmds[1]:
-            # if forward/backward axis is null ("turning on a dime" functionality)
+            # if forward/backward axis is null
             # re-apply speed governor to only axis with a non-zero value
             if abs(cmds[0]) > self._max_speed * 655.35:
                 cmds[0] = self._max_speed * (655.35 if cmds[0] > 0 else -655.35)
             right = cmds[0]
             left = cmds[0] * -1
+            if not cmds[2]:
+                # "turning on a dime" functionality
+                super().go([left, left, right, right], smooth)
+            else:
+                # straight strafing functionality
+                super().go([left * -1, left, right, right * -1], smooth)
         else:
             # if forward/backward axis is not null and left/right axis is not null
             # apply differential to motors accordingly
-            offset = (65535 - abs(cmds[0])) / 65535.0
-            if cmds[0] > 0:
-                right *= offset
-            elif cmds[0] < 0:
-                left *= offset
-        # send translated commands to motors
-        if cmds[2]:
-            super().go([left, left * -1, right * -1, right], smooth)
-        else:
-            super().go([left, left, right, right], smooth)
+            if not cmds[2]:
+                # veer and propell
+                offset = (65535 - abs(cmds[0])) / 65535.0
+                if cmds[1]:
+                    if cmds[0] > 0:
+                        right *= offset
+                    elif cmds[0] < 0:
+                        left *= offset
+                super().go([left, left, right, right], smooth)
+            else:
+                # strafe and propell
+                if 65535 > cmds[0] > 32767:
+                    right *= (65535 - abs(cmds[0])) / -32767
+                elif 0 < cmds[0] <= 32767:
+                    right *= (32767 - abs(cmds[0])) / 32767
+                elif 0 > cmds[0] >= -32767:
+                    left *= (32767 - abs(cmds[0])) / 32767
+                elif -32767 > cmds[0] > -65535:
+                    left *= (65535 - abs(cmds[0])) / -32767
+                if cmds[1] > 0:
+                    super().go([left, right, left, right], smooth)
+                else:
+                    super().go([right, left, right, left], smooth)
