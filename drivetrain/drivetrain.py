@@ -41,7 +41,7 @@ except ImportError:
 
 class Drivetrain:
     """A base class that is only used for inheriting various types of drivetrain configurations."""
-    def __init__(self, motors, max_speed=100):
+    def __init__(self, motors, max_speed=100, smooth=True):
         #  prototype motors lust to avoid error in __del__ on exceptions
         self._motors = []
         for i, m in enumerate(motors):
@@ -53,6 +53,16 @@ class Drivetrain:
         self._motors = motors
         self._max_speed = max(0, min(max_speed, 100))
         self._prev_cmds = [0, 0]
+        self._smooth = smooth
+
+    @property
+    def smooth(self):
+        """This attribute enables (`True`) or disables (`False`) the input smoothing alogrithms for all motors (solenoids excluded) in the drivetrain."""
+        return self._smooth
+
+    @smooth.setter
+    def smooth(self, enable):
+        self._smooth = enable
 
     def sync(self):
         """This function should be used at least once per main loop iteration. It will trigger each
@@ -68,7 +78,7 @@ class Drivetrain:
             commands.append(0)
         self.go(commands)
 
-    def go(self, cmds, smooth=True):
+    def go(self, cmds, smooth=None):
         """A helper function to the child classes to handle extra periphial motors attached to the
         `Drivetrain` object. This is only useful for motors that serve a specialized purpose
         other than propulsion.
@@ -78,10 +88,11 @@ class Drivetrain:
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. This defaults to `True`.
-            Optionally, if the :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute is set to
-            ``0`` then, the smoothing algorithm is automatically bypassed despite this parameter's
-            value.
+            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. If this parameter is not
+            specified, then the drivetrain's `smooth` attribute is used by default.
+            This can be disabled per motor by setting the :attr:`~drivetrain.motor.BiMotor.ramp_time`
+            attribute to ``0``, thus the smoothing algorithm is automatically bypassed despite this
+            parameter's value.
 
             .. note:: Assert this parameter (set as `True`) for robots with a rather high center of
                 gravity or if some parts are poorly attached. The absence of properly smoothed
@@ -91,7 +102,7 @@ class Drivetrain:
         self._prev_cmds = cmds
         for i, cmd in enumerate(cmds):
             if i < len(self._motors):
-                if smooth:
+                if (smooth if smooth is not None else self._smooth):
                     # if input is getting smoothed
                     self._motors[i].cellerate(cmd)
                 else:
@@ -150,7 +161,7 @@ class Tank(Drivetrain):
             raise ValueError('The drivetrain requires 2 motors to operate.')
         super(Tank, self).__init__(motors, max_speed)
 
-    def go(self, cmds, smooth=True):
+    def go(self, cmds, smooth=None):
         """This function applies the user input to the motors' output according to drivetrain's
         motor configuration stated in the contructor documentation.
 
@@ -167,10 +178,11 @@ class Tank(Drivetrain):
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. This defaults to `True`.
-            Optionally, if the :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute is set to
-            ``0`` then, the smoothing algorithm is automatically bypassed despite this parameter's
-            value.
+            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. If this parameter is not
+            specified, then the drivetrain's `smooth` attribute is used by default.
+            This can be disabled per motor by setting the :attr:`~drivetrain.motor.BiMotor.ramp_time`
+            attribute to ``0``, thus the smoothing algorithm is automatically bypassed despite this
+            parameter's value.
 
             .. note:: Assert this parameter (set as `True`) for robots with a rather high center of
                 gravity or if some parts are poorly attached. The absence of properly smoothed
@@ -224,7 +236,7 @@ class Automotive(Drivetrain):
             raise ValueError('The drivetrain requires 2 motors to operate.')
         super(Automotive, self).__init__(motors, max_speed)
 
-    def go(self, cmds, smooth=True):
+    def go(self, cmds, smooth=None):
         """This function applies the user input to motor output according to drivetrain's motor
         configuration.
 
@@ -241,10 +253,11 @@ class Automotive(Drivetrain):
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. This defaults to `True`.
-            Optionally, if the :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute is set to
-            ``0`` then, the smoothing algorithm is automatically bypassed despite this parameter's
-            value.
+            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. If this parameter is not
+            specified, then the drivetrain's `smooth` attribute is used by default.
+            This can be disabled per motor by setting the :attr:`~drivetrain.motor.BiMotor.ramp_time`
+            attribute to ``0``, thus the smoothing algorithm is automatically bypassed despite this
+            parameter's value.
 
             .. note:: Assert this parameter (set as `True`) for robots with a rather high center of
                 gravity or if some parts are poorly attached. The absence of properly smoothed
@@ -368,7 +381,7 @@ class Mecanum(Drivetrain):
             raise ValueError('The drivetrain requires 4 motors to operate.')
         super(Mecanum, self).__init__(motors, max_speed=max_speed)
 
-    def go(self, cmds, smooth=True):
+    def go(self, cmds, smooth=None):
         """This function applies the user input to the motors' output according to drivetrain's
         motor configuration stated in the contructor documentation.
 
@@ -387,10 +400,11 @@ class Mecanum(Drivetrain):
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. This defaults to `True`.
-            Optionally, if the :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute is set to
-            ``0`` then, the smoothing algorithm is automatically bypassed despite this parameter's
-            value.
+            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. If this parameter is not
+            specified, then the drivetrain's `smooth` attribute is used by default.
+            This can be disabled per motor by setting the :attr:`~drivetrain.motor.BiMotor.ramp_time`
+            attribute to ``0``, thus the smoothing algorithm is automatically bypassed despite this
+            parameter's value.
 
             .. note:: Assert this parameter (set as `True`) for robots with a rather high center of
                 gravity or if some parts are poorly attached. The absence of properly smoothed
