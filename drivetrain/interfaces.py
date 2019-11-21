@@ -14,6 +14,8 @@ except ImportError:
         from .uart_serial_ctx import SerialUART as Serial
 from circuitpython_nrf24l01 import RF24
 
+IS_TREADED = PYSERIAL
+
 class NRF24L01():
     """This class acts as a wrapper for circuitpython-nrf24l01 library for using a
     peripheral device with nRF24L01 radio transceivers. This is a base class to
@@ -130,6 +132,8 @@ class NRF24L01rx(NRF24L01):
                     fmt = str(rx[:i], encoding='utf-8')
                     break
             self.go(list(struct.unpack(fmt, rx[len(fmt) + 1:])))
+        if IS_TREADED:
+            self._d_train.sync()
 
     def go(self, cmds):
         """Assembles a list of drivetrain commands from the received bytearray via the nRF24L01
@@ -245,6 +249,9 @@ class USBrx(USB):
                     fmt = str(rx[:i], encoding='utf-8')
                     break
             self.go(list(struct.unpack(fmt, rx[len(fmt) + 1 : -1]))) # ignore fmt & '\n
+        if IS_TREADED:
+            self._d_train.sync()
+
 
     def go(self, cmds):
         """Assembles a list of drivetrain commands from the received bytearray over the USB
