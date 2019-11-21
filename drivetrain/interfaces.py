@@ -128,11 +128,12 @@ class NRF24L01rx(NRF24L01):
             rx = self._rf.recv()
             fmt = b''
             for i, byte in enumerate(rx):
-                if byte == 59:
-                    fmt = str(rx[:i], encoding='utf-8')
+                if byte == 59: # found ';' now convert all prior chars to str & break
+                    # str() doesn't supprot "encoding" kwarg in circuitpython
+                    fmt = ''.join(chr(c) for c in rx[:i])
                     break
             self.go(list(struct.unpack(fmt, rx[len(fmt) + 1:])))
-        if IS_TREADED:
+        if not IS_TREADED:
             self._d_train.sync()
 
     def go(self, cmds):
