@@ -301,8 +301,8 @@ class Locomotive(Drivetrain):
         will be used to apply the force for propulsion.
 
     :param ~microcontroller.Pin switch: This should be the (`board` module's)
-        `~microcontroller.Pin` that is connected to the sensor that will be used to determine when
-        the force for propulsion should be alternated between solenoids.
+        :py:class:`~microcontroller.Pin` that is connected to the sensor that will be used to
+        determine when the force for propulsion should be alternated between solenoids.
 
     .. note:: There is no option to control the speed in this drivetrain class due to the nature of
         using solenoids for propulsion. Electronic solenoids apply either their full force or none

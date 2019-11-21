@@ -22,10 +22,10 @@ class NRF24L01():
 
     :param ~circuitpython_nrf24l01.rf24.RF24 nrf24_object: The instantiated object of the nRF24L01
         transceiver radio.
-    :param bytearray address: This will be the RF address used to transmit to the receiving
-        nRF24L01 transceiver. For more information on this parameter's usage, please read the
-        documentation on the using the `circuitpython-nrf24l01 library
-        <https://circuitpython-nrf24l01.rtfd.io/en/latest/api.html>`_
+    :param bytearray address: This will be the RF address used to transmit/receive drivetrain
+        commands via the nRF24L01 transceiver. For more information on this parameter's usage,
+        please read the documentation on the using the
+        :py:meth:`~circuitpython_nrf24l01.rf24.RF24.open_tx_pipe()`
     :param str cmd_template: This variable will be used as the `"fmt" (Format String of
         Characters) <https://docs.python.org/3.6/library/struct.html#format-strings>`_ parameter
         internally passed to the :py:func:`struct.pack()` and :py:func:`struct.unpack()` for
@@ -64,6 +64,10 @@ class NRF24L01():
 
     @property
     def address(self):
+        """This `bytearray` will be the RF address used to transmit/receive drivetrain
+        commands via the nRF24L01 transceiver. For more information on this parameter's usage,
+        please read the documentation on the using the
+        :py:meth:`~circuitpython_nrf24l01.rf24.RF24.open_tx_pipe()`"""
         return self._address
 
     @address.setter
