@@ -50,7 +50,7 @@ class PWMOut:
         else:
             GPIO.cleanup(self._pin_number) # make sure to deinit pin from any previous unresolved usage
             GPIO.setup(self._pin_number, GPIO.OUT)
-            self._pin = GPIO.PWM(self._pin_number, self._frequency)
+            self._pin = GPIO.PWM(self._pin_number, freq)
             self._pin.start(duty_cycle / 655.35)
         self._frequency = int(freq)
         self._duty_cycle = int(duty_cycle)
