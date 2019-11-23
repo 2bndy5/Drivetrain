@@ -311,15 +311,17 @@ class Locomotive(Drivetrain):
         controlling a shaft's extension/retraction. This may change when we support servos though.
     """
 
-    def __init__(self, solenoids, switch):
+    def __init__(self, solenoids, switch_pin=None):
         if isinstance(solenoids, (BiMotor, PhasedMotor, StepperMotor)):
             raise ValueError('this drivetrain only uses a 1 Solenoid object')
+        if switch_pin is None:
+            raise ValueError('this drivetrain requires an input switch.')
         super(Locomotive, self).__init__([solenoids])
+        self._switch_pin = switch_pin
         if MICROPY:
-            self._switch = machine.Pin(switch, machine.Pin.IN)
+            self._switch_pin.init(machine.Pin.IN)
         else:
-            self._switch = DigitalInOut(switch)
-            self._switch.switch_to_input()
+            self._switch_pin.switch_to_input()
         self._is_forward = True
         self._is_in_motion = False
         self._cancel_thread = not IS_THREADED
@@ -370,7 +372,7 @@ class Locomotive(Drivetrain):
         """This function should be used at least once in the application's main loop. It will
         trigger the alternating of each solenoid's applied force. This IS needed on MCUs
         (microcontroller units) that can't use the threading module."""
-        alternate = (1 if self._switch.value else -1) * \
+        alternate = (1 if self._switch_pin.value else -1) * \
             (-1 if self._is_forward else 1)
         self._motors[0].go(alternate)
 
