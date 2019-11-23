@@ -5,13 +5,13 @@ A colection of controlling interfaces for drivetrains (both external and interna
 import struct
 PYSERIAL = True
 try:
-    from serial import Serial
+    from serial import Serial as UART
 except ImportError:
     PYSERIAL = False # not running on Win32 nor Linux
     try:
-        from busio import UART as Serial
+        from busio import UART
     except ImportError: # running on a MicroPython board
-        from .uart_serial_ctx import SerialUART as Serial
+        from .usart_serial_ctx import SerialUART as UART
 from circuitpython_nrf24l01 import RF24
 
 IS_TREADED = PYSERIAL
@@ -163,7 +163,7 @@ class USB():
         :py:meth:`~drivetrain.interfaces.USBrx.go()`.
     """
     def __init__(self, serial_object, cmd_template="ll"):
-        if not isinstance(serial_object, Serial):
+        if not isinstance(serial_object, UART):
             raise ValueError("serial_object not recognized or unsupported")
         self._ser = serial_object
         # print('Successfully opened port {} @ {} to Arduino device'.format(address, baud))
