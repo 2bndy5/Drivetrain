@@ -7,9 +7,17 @@ and prints the ellapsed time taken to acheive each command
 # pylint: disable=invalid-name
 import time
 import board
+from pulseio import PWMOut
+# except ImportError: # running on Raspberry Pi, nVidia Jetson, or a MicroPython board
+#   from machine import Pin
+#   from drivetrain.helpers import PWMOut
 from drivetrain import BiMotor
 
-motor = BiMotor([board.D22, board.D13], ramp_time=2000)
+motor = BiMotor(
+    plus_pin=board.D22,
+    neg_pin=board.D13,
+    ramp_time=2000)
+
 Value = [-25, 25, -100, 100, 0]
 for test in Value:
     # send input instructions

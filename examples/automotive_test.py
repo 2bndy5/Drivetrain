@@ -7,11 +7,26 @@ as well as the ellapsed time taken for each motor to acheive each individual com
 """
 # pylint: disable=invalid-name
 import time
+# try:
 import board
+from digitalio import DigitalInOut
+from pulseio import PWMOut
+# except ImportError: # running on Raspberry Pi, nVidia Jetson, or a MicroPython board
+#   from machine import Pin
+#   from drivetrain.helpers import PWMOut, DigitalInOut
 from drivetrain.drivetrain import Automotive, PhasedMotor
 
-mymotors = [PhasedMotor([board.D22, board.D13], ramp_time=2000),
-            PhasedMotor([board.D17, board.D18], ramp_time=2000)]
+mymotors = [
+    PhasedMotor(
+        pwm_pin=PWMOut(board.D13),
+        phased_pin=DigitalInOut(board.D22),
+        ramp_time=2000),
+    PhasedMotor(
+        pwm_pin=PWMOut(board.D18),
+        phased_pin=DigitalInOut(board.D17),
+        ramp_time=2000)
+]
+
 d = Automotive(mymotors)
 testInput = [[100, 0],
              [-100, 0],

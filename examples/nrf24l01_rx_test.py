@@ -3,22 +3,33 @@ Example of library usage receiving commands via an
 nRF24L01 transceiver to control a Mecanum drivetrain.
 """
 import board
-from digitalio import DigitalInOut as Dio
+from digitalio import DigitalInOut
+from pulseio import PWMOut
+# except ImportError: # running on Raspberry Pi, nVidia Jetson, or a MicroPython board
+#   from machine import Pin
+#   from drivetrain.helpers import PWMOut, DigitalInOut
 from circuitpython_nrf24l01 import RF24
 from drivetrain import Mecanum, BiMotor, NRF24L01rx
 
 # instantiate transceiver radio on the SPI bus
-nrf = RF24(board.SPI(), Dio(board.D5), Dio(board.D4))
+nrf = RF24(board.SPI(), DigitalInOut(board.D5), DigitalInOut(board.D4))
 
 # instantiate motors for a Mecanum drivetrain in the following order
 # Front-Right, Rear-Right, Rear-Left, Front-Left
 motors = [
-    BiMotor([board.RX, board.TX]),
-    BiMotor([board.D13, board.D12]),
-    BiMotor([board.D11, board.D10]),
-    BiMotor([board.D2, board.D7])
+    BiMotor(
+        plus_pin=PWMOut(board.RX),
+        neg_pin=PWMOut(board.TX)),
+    BiMotor(
+        plus_pin=PWMOut(board.D13),
+        neg_pin=PWMOut(board.D12)),
+    BiMotor(
+        plus_pin=PWMOut(board.D11),
+        neg_pin=PWMOut(board.D10)),
+    BiMotor(
+        plus_pin=PWMOut(board.D2),
+        neg_pin=PWMOut(board.D7))
     ]
-# NOTE there are no more PWM pins available
 
 # instantiate receiving object for a Mecanum drivetrain
 d = NRF24L01rx(nrf, Mecanum(motors))

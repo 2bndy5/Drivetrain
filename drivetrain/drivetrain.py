@@ -318,10 +318,7 @@ class Locomotive(Drivetrain):
             raise ValueError('this drivetrain requires an input switch.')
         super(Locomotive, self).__init__([solenoids])
         self._switch_pin = switch_pin
-        if MICROPY:
-            self._switch_pin.init(machine.Pin.IN)
-        else:
-            self._switch_pin.switch_to_input()
+        self._switch_pin.switch_to_input()
         self._is_forward = True
         self._is_in_motion = False
         self._cancel_thread = not IS_THREADED

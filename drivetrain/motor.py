@@ -28,20 +28,12 @@ A collection of driver classes for different single phase DC motors implementing
 module. Includes Solenoid (parent base class), BiMotor & PhasedMotor (children of Solenoid)
 
 """
-MICROPY = False
 try:
     from digitalio import DigitalInOut
 except ImportError: # running on a MicroPython board
-    import machine
-    MICROPY = True
-
+    from .helpers import DigitalInOut
 from circuitpython_nrf24l01 import RF24
-
-try:
-    from pulseio import PWMOut
-except ImportError: # running on Raspberry Pi, nVidia Jetson, or a MicroPython board
-    from .pwm import PWMOut
-from .smoothing_input import Smooth
+from .helpers.smoothing_input import Smooth
 # pylint: disable=too-many-instance-attributes,too-few-public-methods,invalid-name
 
 class Solenoid:
@@ -72,10 +64,7 @@ class Solenoid:
                 self._signals.append(plus_pin)
             elif neg_pin is not None:
                 self._signals.append(neg_pin)
-            if MICROPY:
-                self._signals[i].init(machine.Pin.OUT)
-            else:
-                self._signals[i].switch_to_output(False)
+            self._signals[i].switch_to_output(False)
 
     @property
     def value(self):
@@ -212,10 +201,7 @@ class PhasedMotor(Smooth):
         for _ in range(len_pins):
             if phased_pin is not None:
                 self._signals.insert(0, phased_pin)
-                if MICROPY:
-                    self._signals[0].init(machine.Pin.OUT, value=False)
-                else:
-                    self._signals[0].switch_to_output(False)
+                self._signals[0].switch_to_output(False)
             elif pwm_pin is not None:
                 self._signals.insert(1, pwm_pin)
         super(PhasedMotor, self).__init__(ramp_time)

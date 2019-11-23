@@ -2,9 +2,18 @@
 # pylint: disable=invalid-name
 import time
 import board
+from digitalio import DigitalInOut
+# except ImportError: # running on Raspberry Pi, nVidia Jetson, or a MicroPython board
+#   from machine import Pin
+#   from drivetrain.helpers import DigitalInOut
 from drivetrain.stepper import StepperMotor
 
-motor = StepperMotor([board.D13, board.D12, board.D11, board.D10])
+motor = StepperMotor([
+    DigitalInOut(board.D13),
+    DigitalInOut(board.D12),
+    DigitalInOut(board.D11),
+    DigitalInOut(board.D10)
+    ])
 Steps = [-256, 256, 0] # 1024, 2048, 4096]
 Angle = [-15, 15, 0] # 180, 360]
 Value = [-25, 25, 0] # -50, 100, 0]

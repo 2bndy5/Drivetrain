@@ -11,7 +11,7 @@ except ImportError:
     try:
         from busio import UART
     except ImportError: # running on a MicroPython board
-        from .usart_serial_ctx import SerialUART as UART
+        from .helpers.usart_serial_ctx import SerialUART as UART
 from circuitpython_nrf24l01 import RF24
 
 IS_TREADED = PYSERIAL
