@@ -31,7 +31,7 @@ module. Includes Solenoid (parent base class), BiMotor & PhasedMotor (children o
 try:
     from digitalio import DigitalInOut
 except ImportError: # running on a MicroPython board
-    from .helpers import DigitalInOut
+    from .helpers.digitalout import DigitalInOut
 from circuitpython_nrf24l01 import RF24
 from .helpers.smoothing_input import Smooth
 # pylint: disable=too-many-instance-attributes,too-few-public-methods,invalid-name

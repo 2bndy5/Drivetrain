@@ -30,14 +30,10 @@ configurations for the raspberry pi. Currently only supporting the R2D2 (aliased
 
 """
 # pylint: disable=arguments-differ,invalid-name
-MICROPY = False
-try:
-    from digitalio import DigitalInOut
-except ImportError:
-    import machine
-    MICROPY = True
 from .stepper import StepperMotor
-from .motor import Solenoid, BiMotor, PhasedMotor
+from .helpers.smoothing_input import Smooth
+from .motor import Solenoid
+
 IS_THREADED = True
 try:
     from threading import Thread
@@ -47,12 +43,11 @@ except ImportError:
 
 class Drivetrain:
     """A base class that is only used for inheriting various types of drivetrain configurations."""
-
     def __init__(self, motors, max_speed=100, smooth=True):
         #  prototype motors lust to avoid error in __del__ on exceptions
         self._motors = []
         for i, m in enumerate(motors):
-            if not isinstance(m, (Solenoid, BiMotor, PhasedMotor, StepperMotor)):
+            if not isinstance(m, Smooth):
                 raise ValueError(
                     'unknown motor (index {}) of type {}'.format(i, type(m)))
         if not motors:
@@ -246,9 +241,9 @@ class Automotive(Drivetrain):
     def __init__(self, motors, max_speed=100):
         if len(motors) != 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
-        if not isinstance(motors[0], (Solenoid, BiMotor, PhasedMotor, StepperMotor)):
+        if not isinstance(motors[0], Smooth):
             raise ValueError(type(motors[0]), 'unrecognized or unsupported motor object')
-        if not isinstance(motors[1], (BiMotor, PhasedMotor, StepperMotor)):
+        if not isinstance(motors[1], Smooth):
             raise ValueError(type(motors[1]), 'unrecognized or unsupported motor object')
         super(Automotive, self).__init__(motors, max_speed)
 
@@ -312,7 +307,7 @@ class Locomotive(Drivetrain):
     """
 
     def __init__(self, solenoids, switch_pin=None):
-        if isinstance(solenoids, (BiMotor, PhasedMotor, StepperMotor)):
+        if isinstance(solenoids, Solenoid):
             raise ValueError('this drivetrain only uses a 1 Solenoid object')
         if switch_pin is None:
             raise ValueError('this drivetrain requires an input switch.')
@@ -405,7 +400,7 @@ class Mecanum(Drivetrain):
         if len(motors) != 4:
             raise ValueError('The drivetrain requires 4 motors to operate.')
         for i, m in enumerate(motors):
-            if not isinstance(m, (BiMotor, PhasedMotor, StepperMotor)):
+            if not isinstance(m, Smooth):
                 raise ValueError(
                     'unknown motor (index {}) of type {}'.format(i, type(m)))
         super(Mecanum, self).__init__(motors, max_speed=max_speed)

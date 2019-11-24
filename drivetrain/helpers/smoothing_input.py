@@ -24,7 +24,8 @@ class Smooth:
     def ramp_time(self):
         """This attribute is the maximum amount of time (in milliseconds) used to smooth the input
         values. A negative value will be used as a positive number. Set this to ``0`` to
-        disable all smoothing on the motor input values or just set the `value` atribute
+        disable all smoothing on the motor input values or just set the
+        :py:attr:`~drivetrain.interfaces.NRF24L01.value` attribute
         directly to bypass the smoothing algorithm.
 
         .. note:: Since the change in speed (target - initial) is also used to determine how much
