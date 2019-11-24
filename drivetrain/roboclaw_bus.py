@@ -44,9 +44,9 @@ class RoboclawMotor(Smooth):
             self._rc_bus.duty_m2(int(self._value / 2))
 
     def deinit(self):
-        """de-initialize the serial object on its port for future use."""
+        """Stops both channels & de-initialize the serial object on its port for future use."""
         self._rc_bus.duty_m1_m2(0, 0)
         self._rc_bus.serial_obj.deinit()
 
     def __del__(self):
-        self._rc_bus.serial_obj.deinit()
+        self.deinit()
