@@ -96,31 +96,26 @@ StepperMotor
 .. autoclass:: drivetrain.stepper.StepperMotor
     :members:
 
-.. non-CircuitpythonPython Helpers
-.. ===============================
-
-.. .. currentmodule:: drivetrain.helpers
-
-.. DigitalInOut For MicroPython
-.. ----------------------------
-
-.. .. autoclass:: drivetrain.helpers.digitaio.DigitalInOut
-..     :members:
-
-.. PWMOut For MicroPython & RPi.GPIO
-.. ----------------------------------
-
-.. .. autoclass:: drivetrain.helpers.pwm.PWMOut
-..     :members:
-
-.. UART Serial with context manager For MicroPython
-.. -------------------------------------------------
-
-.. .. autoclass:: drivetrain.helpers.usart_serial_ctx.SerialUART
-..     :members:
-
 Smoothing Algorithm
 -------------------
 
 .. autoclass:: drivetrain.helpers.smoothing_input.Smooth
     :members:
+
+non-CircuitpythonPython Helpers
+===============================
+
+DigitalInOut For MicroPython
+----------------------------
+
+``from drivetrain.helpers.digitaio import DigitalInOut``
+
+PWMOut For MicroPython & RPi.GPIO
+----------------------------------
+
+``from drivetrain.helpers.pwm import PWMOut``
+
+UART Serial with context manager For MicroPython
+-------------------------------------------------
+
+``from drivetrain.helpers.usart_serial_ctx import SerialUART as UART``

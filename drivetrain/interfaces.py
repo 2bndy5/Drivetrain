@@ -13,10 +13,11 @@ except ImportError:
     except ImportError: # running on a MicroPython board
         from .helpers.usart_serial_ctx import SerialUART as UART
 from circuitpython_nrf24l01 import RF24
+from .helpers.buffer_mixin import BufferMixin
 
 IS_TREADED = PYSERIAL
 
-class NRF24L01():
+class NRF24L01(BufferMixin):
     """This class acts as a wrapper for circuitpython-nrf24l01 library for using a
     peripheral device with nRF24L01 radio transceivers. This is a base class to
     :class:`~drivetrain.interfaces.NRF24L01tx` and :class:`~drivetrain.interfaces.NRF24L01rx`
@@ -44,20 +45,7 @@ class NRF24L01():
         self._rf.listen = False
         # self._rf.what_happened(1) # prints radio condition
         self._prev_cmds = [None, None]
-        self._fmt = cmd_template
-
-    @property
-    def cmd_template(self):
-        """Use this attribute to change or check the format string used to pack or unpack
-        drivetrain commands in `bytearray` form. Refer to `Format String and Format Characters
-        <https://docs.python.org/3.6/library/struct.html#format-strings>`_  for allowed datatype
-        aliases. The number of characters in this string must correspond to the number of commands
-        in the ``cmds`` list passed to :py:meth:`~drivetrain.interfaces.NRF24L01rx.go()`."""
-        return self._fmt
-
-    @cmd_template.setter
-    def cmd_template(self, fmt):
-        self._fmt = fmt
+        super(NRF24L01, self).__init__(cmd_template)
 
     @property
     def value(self):
@@ -148,7 +136,7 @@ class NRF24L01rx(NRF24L01):
         self._prev_cmds = list(cmds)
         self._d_train.go(self.value)
 
-class USB():
+class USB(BufferMixin):
     """
     This base class acts as a wrapper to pyserial module for communicating to an external USB
     serial device. Specifically designed for an Arduino running custom code.
@@ -172,20 +160,7 @@ class USB():
         else:
             self._ser.deinit()
         self._prev_cmds = [None, None]
-        self._fmt = cmd_template
-
-    @property
-    def cmd_template(self):
-        """Use this `str` attribute to change or check the format string used to pack or unpack
-        drivetrain commands in `bytearray` form. Refer to `Format String and Format Characters
-        <https://docs.python.org/3.6/library/struct.html#format-strings>`_  for allowed datatype
-        aliases. The number of characters in this string must correspond to the number of commands
-        in the ``cmds`` list passed to :py:meth:`~drivetrain.interfaces.USBrx.go()`."""
-        return self._fmt
-
-    @cmd_template.setter
-    def cmd_template(self, fmt):
-        self._fmt = fmt
+        super(USB, self).__init__(cmd_template)
 
     @property
     def value(self):

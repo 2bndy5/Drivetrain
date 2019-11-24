@@ -1,6 +1,6 @@
 """ a wrapper for micropython's machine.Pin object """
 # pylint: disable=import-error
-from microcontroller
+import machine
 
 class DigitalInOut:
     """A class to control micropython's machine.Pin object like

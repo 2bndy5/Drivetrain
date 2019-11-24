@@ -104,11 +104,12 @@ class Drivetrain:
         self._prev_cmds = cmds
         for i, cmd in enumerate(cmds):
             if i < len(self._motors):
-                if (smooth if smooth is not None else self._smooth):
+                if (smooth if smooth is not None else self.smooth):
                     # if input is getting smoothed
                     self._motors[i].cellerate(cmd)
                 else:
                     self._motors[i].value = cmd
+        self.sync()
 
     @property
     def value(self):
