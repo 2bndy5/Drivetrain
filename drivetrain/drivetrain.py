@@ -31,8 +31,8 @@ configurations for the raspberry pi. Currently only supporting the R2D2 (aliased
 """
 # pylint: disable=arguments-differ,invalid-name
 from .stepper import StepperMotor
-from .helpers.smoothing_input import Smooth
 from .motor import Solenoid
+from .smoothing_input import Smooth
 
 IS_THREADED = True
 try:

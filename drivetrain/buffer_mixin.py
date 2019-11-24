@@ -1,4 +1,14 @@
 class BufferMixin:
+    """A Mixin class to abstract using the ``fmt`` parameter to internal calls of `struct`
+    methods.
+
+    :param str cmd_template: This variable will be used as the `"fmt" (Format String of
+        Characters) <https://docs.python.org/3.6/library/struct.html#format-strings>`_ parameter
+        internally passed to the :py:func:`struct.pack()` and :py:func:`struct.unpack()` for
+        transmiting and receiving drivetrain commands. The number of characters in this string must
+        correspond to the number of commands in the ``cmds`` list passed to base object's
+        ``go()`` method.
+    """
     def __init__(self, cmd_template):
         self._fmt = cmd_template
 

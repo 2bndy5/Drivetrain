@@ -11,9 +11,9 @@ except ImportError:
     try:
         from busio import UART
     except ImportError: # running on a MicroPython board
-        from .helpers.usart_serial_ctx import SerialUART as UART
+        from .usart_serial_ctx import SerialUART as UART
 from circuitpython_nrf24l01 import RF24
-from .helpers.buffer_mixin import BufferMixin
+from .buffer_mixin import BufferMixin
 
 IS_TREADED = PYSERIAL
 
@@ -29,12 +29,6 @@ class NRF24L01(BufferMixin):
         commands via the nRF24L01 transceiver. For more information on this parameter's usage,
         please read the documentation on the using the
         :py:meth:`~circuitpython_nrf24l01.rf24.RF24.open_tx_pipe()`
-    :param str cmd_template: This variable will be used as the `"fmt" (Format String of
-        Characters) <https://docs.python.org/3.6/library/struct.html#format-strings>`_ parameter
-        internally passed to the :py:func:`struct.pack()` and :py:func:`struct.unpack()` for
-        transmiting and receiving drivetrain commands. The number of characters in this string must
-        correspond to the number of commands in the ``cmds`` list passed to
-        :py:meth:`~drivetrain.interfaces.NRF24L01rx.go()`.
     """
     def __init__(self, nrf24_object, address=b'rfpi0', cmd_template="ll"):
         if not isinstance(nrf24_object, RF24):
@@ -143,12 +137,6 @@ class USB(BufferMixin):
 
     :param busio.UART,serial.Serial,machine.UART serial_object: The instantiated serial object to
         be used for the serial connection.
-    :param str cmd_template: This variable will be used as the `"fmt" (Format String of
-        Characters) <https://docs.python.org/3.6/library/struct.html#format-strings>`_ parameter
-        internally passed to the :py:func:`struct.pack()` and :py:func:`struct.unpack()` for
-        transmiting and receiving drivetrain commands. The number of characters in this string must
-        correspond to the number of commands in the ``cmds`` list passed to
-        :py:meth:`~drivetrain.interfaces.USBrx.go()`.
     """
     def __init__(self, serial_object, cmd_template="ll"):
         if not isinstance(serial_object, UART):

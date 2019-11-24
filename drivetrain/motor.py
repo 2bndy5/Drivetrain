@@ -31,30 +31,21 @@ module. Includes Solenoid (parent base class), BiMotor & PhasedMotor (children o
 try:
     from digitalio import DigitalInOut
 except ImportError: # running on a MicroPython board
-    from .helpers.digitalout import DigitalInOut
+    from .digitalout import DigitalInOut
 from circuitpython_nrf24l01 import RF24
-from .helpers.smoothing_input import Smooth
+from .smoothing_input import Smooth
 # pylint: disable=too-many-instance-attributes,too-few-public-methods,invalid-name
 
 class Solenoid:
-    """This base class is meant be used as a parent to `BiMotor` and `PhasedMotor` classes of this
-    module, but can be used for solenoids if needed. Solenoids, by nature, cannot be controlled
-    dynamically (cannot be any value other than `True` or `False`). Despite the fact that this class
-    holds all the smoothing input algorithms for its child classes, the output values, when
-    instantiated objects with this base class, are not actually smoothed. With that said, this
-    class can be used to control up to 2 solenoids (see also `value` attribute for more details) as
-    in the case of an actual locomotive train.
+    """This class is meant be used to control up to 2 solenoids (see also `value` attribute
+    for more details) as in the case of an actual locomotive train. Solenoids, by nature, cannot
+    be controlled dynamically (cannot be any value other than `True` or `False`).
 
     :param list pins: A `list` of (`board` module's) :py:class:`~microcontoller.Pin` numbers that
         are used to drive the solenoid(s). The length of this `list` must be in range [1, 2] (any
         additional items/pins will be ignored).
-
-    :param int ramp_time: This parameter is really a placeholder for the child classes
-        `BiMotor` & `PhasedMotor` as it has no affect on objects instantiated with this base class.
-        Changing this value has not been tested and will probably slightly delay the
-        solenoid(s) outputs.
     """
-    def __init__(self, plus_pin=None, neg_pin=None, ramp_time=0):
+    def __init__(self, plus_pin=None, neg_pin=None):
         len_pins = bool(plus_pin is not None) + bool(neg_pin is not None)
         if not len_pins:
             raise ValueError('The number of pins used must be at least 1.')

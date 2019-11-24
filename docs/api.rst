@@ -39,11 +39,18 @@ Mecanum Drivetrain
 Drivetrain Interfaces
 ======================
 
+Buffer Mixin
+------------
+
+.. autoclass:: drivetrain.buffer_mixin.BufferMixin
+    :members:
+
 NRF24L01
 ---------
 
 .. autoclass:: drivetrain.interfaces.NRF24L01
     :members:
+    :show-inheritance:
 
 .. autoclass:: drivetrain.interfaces.NRF24L01tx
     :members:
@@ -58,6 +65,7 @@ USB
 
 .. autoclass:: drivetrain.interfaces.USB
     :members:
+    :show-inheritance:
 
 .. autoclass:: drivetrain.interfaces.USBtx
     :members:
@@ -70,6 +78,12 @@ USB
 Motor Types
 ===================
 
+Smoothing Algorithm
+-------------------
+
+.. autoclass:: drivetrain.smoothing_input.Smooth
+    :members:
+
 Solenoid
 ----------------
 
@@ -81,25 +95,19 @@ BiMotor
 
 .. autoclass:: drivetrain.motor.BiMotor
     :members:
-    :inherited-members:
+    :show-inheritance:
 
 PhasedMotor
 ----------------
 
 .. autoclass:: drivetrain.motor.PhasedMotor
     :members:
-    :inherited-members:
+    :show-inheritance:
 
 StepperMotor
 ----------------
 
 .. autoclass:: drivetrain.stepper.StepperMotor
-    :members:
-
-Smoothing Algorithm
--------------------
-
-.. autoclass:: drivetrain.helpers.smoothing_input.Smooth
     :members:
 
 non-CircuitpythonPython Helpers
@@ -108,12 +116,12 @@ non-CircuitpythonPython Helpers
 DigitalInOut For MicroPython
 ----------------------------
 
-``from drivetrain.helpers.digitaio import DigitalInOut``
+``from drivetrain.digitaio import DigitalInOut``
 
 PWMOut For MicroPython & RPi.GPIO
 ----------------------------------
 
-``from drivetrain.helpers.pwm import PWMOut``
+``from drivetrain.pwm import PWMOut``
 
 UART Serial with context manager For MicroPython
 -------------------------------------------------

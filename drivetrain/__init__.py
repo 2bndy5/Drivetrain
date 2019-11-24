@@ -1,8 +1,11 @@
 """to simplify importing objects across all modules"""
-from .drivetrain import Drivetrain, Tank, Automotive, Locomotive, Mecanum
 from .motor import Solenoid, BiMotor, PhasedMotor
-from .interfaces import NRF24L01tx, NRF24L01rx, USBtx, USBrx
 from .stepper import StepperMotor
+from .drivetrain import Drivetrain, Tank, Automotive, Locomotive, Mecanum
+from .interfaces import NRF24L01tx, NRF24L01rx, USBtx, USBrx
+from .smoothing_input import Smooth
+from drivetrain.buffer_mixin import BufferMixin
+
 __all__ = [
     'Tank',
     'Automotive',
@@ -15,5 +18,7 @@ __all__ = [
     'NRF24L01tx',
     'NRF24L01rx',
     'USBtx',
-    'USBrx'
+    'USBrx',
+    'Smooth',
+    'BufferMixin'
 ]
