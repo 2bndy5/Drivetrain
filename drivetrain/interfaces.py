@@ -8,10 +8,7 @@ try:
     from serial import Serial as UART
 except ImportError:
     PYSERIAL = False # not running on Win32 nor Linux
-    try:
-        from busio import UART
-    except ImportError: # running on a MicroPython board
-        from .usart_serial_ctx import SerialUART as UART
+    from .usart_serial_ctx import SerialUART as UART
 from circuitpython_nrf24l01 import RF24
 from .buffer_mixin import BufferMixin
 
@@ -143,10 +140,7 @@ class USB(BufferMixin):
             raise ValueError("serial_object not recognized or unsupported")
         self._ser = serial_object
         # print('Successfully opened port {} @ {} to Arduino device'.format(address, baud))
-        if PYSERIAL:
-            self._ser.close()
-        else:
-            self._ser.deinit()
+        self._ser.close()
         self._prev_cmds = [None, None]
         super(USB, self).__init__(cmd_template)
 
