@@ -29,7 +29,8 @@ intersphinx_mapping = {
     'CircuitPython': ('https://circuitpython.readthedocs.io/en/latest/', None),
     'MicroPython' : ('http://docs.micropython.org/en/latest/', None),
     'circuitpython-nrf24l01':('https://circuitpython-nrf24l01.readthedocs.io/en/stable/', None),
-    'PySerial' : ('https://pyserial.readthedocs.io/en/latest/', None)
+    'PySerial' : ('https://pyserial.readthedocs.io/en/latest/', None),
+    'python-Roboclaw' : ('https://python-roboclaw.readthedocs.io/en/latest/', None)
 }
 
 # Add any paths that contain templates here, relative to this directory.

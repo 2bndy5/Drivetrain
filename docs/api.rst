@@ -75,6 +75,7 @@ USB
     :members:
     :show-inheritance:
 
+
 Motor Types
 ===================
 
@@ -109,6 +110,13 @@ StepperMotor
 
 .. autoclass:: drivetrain.stepper.StepperMotor
     :members:
+
+Roboclaw Bus object helper class
+----------------------------------
+
+.. automodule:: drivetrain.roboclaw_bus
+    :members:
+    :show-inheritance:
 
 non-CircuitpythonPython Helpers
 ===============================

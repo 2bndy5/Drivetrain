@@ -1,3 +1,4 @@
 Adafruit-Blinka
 circuitpython-nrf24l01
 RPi.GPIO
+git+https://github.com/2bndy5/python-roboclaw.git
