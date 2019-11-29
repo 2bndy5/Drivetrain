@@ -3,34 +3,41 @@
 BiMotor test
 ------------
 
-.. literalinclude:: ../examples/bimotor_simpletest.py
-    :caption: examples/bimotor_simpletest.py
+.. literalinclude:: ../examples/bimotor_test.py
+    :caption: examples/bimotor_test.py
     :linenos:
 
 PhasedMotor test
 ----------------
 
-.. literalinclude:: ../examples/phasedmotor_simpletest.py
-    :caption: examples/phasedmotor_simpletest.py
+.. literalinclude:: ../examples/phasedmotor_test.py
+    :caption: examples/phasedmotor_test.py
     :linenos:
 
 StepperMotor test
 -----------------
 
-.. literalinclude:: ../examples/steppermotor_simpletest.py
-    :caption: examples/steppermotor_simpletest.py
+.. literalinclude:: ../examples/steppermotor_test.py
+    :caption: examples/steppermotor_test.py
     :linenos:
 
 Tank Drivetrain test
 ---------------------
 
-.. literalinclude:: ../examples/tank_simpletest.py
-    :caption: examples/tank_simpletest.py
+.. literalinclude:: ../examples/tank_test.py
+    :caption: examples/tank_test.py
     :linenos:
 
 Automotive Drivetrain test
 --------------------------
 
-.. literalinclude:: ../examples/automotive_simpletest.py
-    :caption: examples/automotive_simpletest.py
+.. literalinclude:: ../examples/automotive_test.py
+    :caption: examples/automotive_test.py
+    :linenos:
+
+nRF24L01 receiving test
+-----------------------
+
+.. literalinclude:: ../examples/nrf24l01_rx_test.py
+    :caption: examples/nrf24l01_rx_test.py
     :linenos:

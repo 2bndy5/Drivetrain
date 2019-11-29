@@ -30,18 +30,24 @@ module. Includes Solenoid (parent base class), BiMotor & PhasedMotor (children o
 """
 from math import pi as PI, cos
 import time
-import serial
-from digitalio import DigitalInOut
-from busio import SPI
-from circuitpython_nrf24l01 import RF24
+MICROPY = False
+try:
+    from digitalio import DigitalInOut
+except ImportError: # running on a MicroPython board
+    import machine
+    MICROPY = True
+
 IS_THREADED = True
 try:
     from threading import Thread
 except ImportError:
     IS_THREADED = False
+
+from circuitpython_nrf24l01 import RF24
+
 try:
     from pulseio import PWMOut
-except ImportError:
+except ImportError: # running on Raspberry Pi, nVidia Jetson, or a MicroPython board
     from .pwm import PWMOut
 
 # pylint: disable=too-many-instance-attributes,too-few-public-methods,invalid-name
@@ -55,8 +61,8 @@ class Solenoid:
     class can be used to control up to 2 solenoids (see also `value` attribute for more details) as
     in the case of an actual locomotive train.
 
-    :param list pins: A `list` of (`board` module's) pins that are used to drive the
-        the solenoid(s). The length of this `list` must be in range [1, 2] (any
+    :param list pins: A `list` of (`board` module's) :py:class:`~microcontoller.Pin` numbers that
+        are used to drive the solenoid(s). The length of this `list` must be in range [1, 2] (any
         additional items/pins will be ignored).
 
     :param int ramp_time: This parameter is really a placeholder for the child classes
@@ -71,8 +77,11 @@ class Solenoid:
         for i, pin in enumerate(pins):
             if i >= 2:
                 break
-            self._signals.append(DigitalInOut(pin))
-            self._signals[i].switch_to_output(False)
+            if MICROPY:
+                self._signals.append(machine.Pin(pin, machine.Pin.OUT))
+            else:
+                self._signals.append(DigitalInOut(pin))
+                self._signals[i].switch_to_output(False)
         # variables used to track acceleration
         self._init_speed = 0
         self._target_speed = 0
@@ -215,11 +224,11 @@ class BiMotor(Solenoid):
     . Each pin represent the controlling signal for the motor's speed in a single rotational
     direction.
 
-    :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive
-        the motor. The length of this `list` or `tuple` must be in range [1, 2]; any additional
-        items/pins will be ignored, and a `ValueError` exception is thrown if no pins are passed
-        (an empty `tuple`/`list`). If only 1 pin is passed, then the motor will only rotate in 1
-        direction depending on how the motor is connected to the motor driver.
+    :param list pins: A `list` of (`board` module's) :py:class:`~microcontoller.Pin` numbers that
+        are used to drive the motor. The length of this `list` or `tuple` must be in range [1, 2];
+        any additional items/pins will be ignored, and a `ValueError` exception is thrown if no
+        pins are passed (an empty `tuple`/`list`). If only 1 pin is passed, then the motor will
+        only rotate in 1 direction depending on how the motor is connected to the motor driver.
 
     :param int ramp_time: The time (in milliseconds) that is used to smooth the motor's input.
         Default is 500. This time represents the maximum amount of time that the input will be
@@ -232,9 +241,9 @@ class BiMotor(Solenoid):
     """
     def __init__(self, pins, ramp_time=500):
         super(BiMotor, self).__init__(pins, ramp_time)
-        for signal in self._signals:
-            signal.deinit()
-        self._signals.clear()
+        for i in range(len(self._signals) - 1, -1, -1):
+            self._signals[i].deinit()
+            del self._signals[i]
         for pin in pins:
             if len(self._signals) == 2:
                 break
@@ -276,9 +285,9 @@ class PhasedMotor(Solenoid):
         * 1 PWM output (to control the motor's speed)
         * 1 digital output (to control the motor's rotational direction)
 
-    :param list,tuple pins: A `list` or `tuple` of (`board` module's) pins that are used to drive
-        the to the motor. The length of this `list`/`tuple` must be 2, otherwise a `ValueError`
-        exception is thrown.
+    :param list pins: A `list` of (`board` module's) :py:class:`~microcontoller.Pin` numbers that
+        are used to drive the motor. The length of this `list`/`tuple` must be 2, otherwise a
+        `ValueError` exception is thrown.
 
         .. note:: The first pin in the `tuple`/`list` is used for the digital output signal
             that signifies the motor's rotational direction. The second pin is used for PWM output
@@ -300,7 +309,7 @@ class PhasedMotor(Solenoid):
         # free up the 2nd digital pin from parent's declaration
         self._signals[1].deinit()
         # remove 2nd pin from list and re-append it as PWMOut object
-        self._signals.pop()
+        del self._signals[1]
         self._signals.append(PWMOut(pins[1]))
 
     @property
