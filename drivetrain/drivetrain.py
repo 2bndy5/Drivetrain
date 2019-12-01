@@ -32,7 +32,7 @@ configurations for the raspberry pi. Currently only supporting the R2D2 (aliased
 # pylint: disable=arguments-differ,invalid-name
 from .stepper import StepperMotor
 from .motor import Solenoid
-from .smoothing_input import Smooth
+from .helpers.smoothing_input import SmoothMotor, SmoothDrivetrain
 
 IS_THREADED = True
 try:
@@ -40,113 +40,7 @@ try:
 except ImportError:
     IS_THREADED = False
 
-
-class Drivetrain:
-    """A base class that is only used for inheriting various types of drivetrain configurations."""
-    def __init__(self, motors, max_speed=100, smooth=True):
-        #  prototype motors lust to avoid error in __del__ on exceptions
-        self._motors = []
-        for i, m in enumerate(motors):
-            if not isinstance(m, Smooth):
-                raise ValueError(
-                    'unknown motor (index {}) of type {}'.format(i, type(m)))
-        if not motors:
-            raise ValueError('No motors were passed to the drivetrain.')
-        self._motors = motors
-        self._max_speed = max(0, min(max_speed, 100))
-        self._prev_cmds = [0, 0]
-        self._smooth = smooth
-
-    @property
-    def smooth(self):
-        """This attribute enables (`True`) or disables (`False`) the input smoothing alogrithms for all motors (solenoids excluded) in the drivetrain."""
-        return self._smooth
-
-    @smooth.setter
-    def smooth(self, enable):
-        self._smooth = enable
-
-    def sync(self):
-        """This function should be used at least once per main loop iteration. It will trigger each
-        motor's subsequent sync(), thus applying the smoothing input operations if needed. This is
-        not needed if the smoothing algorithms are not utilized/necessary in the application"""
-        for motor in self._motors:
-            motor.sync()
-
-    def stop(self):
-        """This function will stop all motion in the drivetrain's motors"""
-        commands = []
-        for _ in self._motors:
-            commands.append(0)
-        self.go(commands)
-
-    def go(self, cmds, smooth=None):
-        """A helper function to the child classes to handle extra periphial motors attached to the
-        `Drivetrain` object. This is only useful for motors that serve a specialized purpose
-        other than propulsion.
-
-        :param list,tuple cmds: A `list` or `tuple` of `int` motor input values to be passed in
-            corresponding order to the motors. Each input value must be on range [-65535, 65535].
-
-        :param bool smooth: This controls the motors' built-in algorithm that smooths input values
-            over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. If this parameter is not
-            specified, then the drivetrain's `smooth` attribute is used by default.
-            This can be disabled per motor by setting the :attr:`~drivetrain.motor.BiMotor.ramp_time`
-            attribute to ``0``, thus the smoothing algorithm is automatically bypassed despite this
-            parameter's value.
-
-            .. note:: Assert this parameter (set as `True`) for robots with a rather high center of
-                gravity or if some parts are poorly attached. The absence of properly smoothed
-                acceleration/deceleration will likely make the robot fall over or loose parts
-                become dislodged on sudden and drastic changes in speed.
-        """
-        self._prev_cmds = cmds
-        for i, cmd in enumerate(cmds):
-            if i < len(self._motors):
-                if (smooth if smooth is not None else self.smooth):
-                    # if input is getting smoothed
-                    self._motors[i].cellerate(cmd)
-                else:
-                    self._motors[i].value = cmd
-        self.sync()
-
-    @property
-    def value(self):
-        return self._prev_cmds
-
-    @property
-    def is_cellerating(self):
-        """This attribute contains a `bool` indicating if the drivetrain's motors' speed is in the
-        midst of changing. (read-only)"""
-        for m in self._motors:
-            if m.is_cellerating:
-                return True
-        return False
-
-    @property
-    def max_speed(self):
-        """This attribute determines a motor's top speed. Valid input values range [0, 100]."""
-        return self._max_speed
-
-    @max_speed.setter
-    def max_speed(self, val):
-        self._max_speed = max(0, min(val if val is not None else 0, 100))
-
-    def __repr__(self):
-        """Aggregates all the motors current values into a printable string."""
-        output = ''
-        for i, m in self._motors:
-            output += 'motor {} value = {}'.format(i, m.value)
-            if i != len(self._motors) - 1:
-                output += ','
-
-    def __del__(self):
-        self._motors.clear()
-        del self._motors
-
-
-class Tank(Drivetrain):
+class Tank(SmoothDrivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
     are shared tasks (also known as a "Differential" Drivetrain). For example: The military's tank vehicle essentially has 2 motors (1 on each side) where propulsion is done by both motors, and steering is controlled by varying the different motors' input commands.
 
@@ -163,7 +57,12 @@ class Tank(Drivetrain):
     def __init__(self, motors, max_speed=100):
         if len(motors) != 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
-        super(Tank, self).__init__(motors, max_speed)
+        for i, m in enumerate(motors):
+            if not isinstance(m, SmoothMotor):
+                raise ValueError(
+                    'unknown motor (index {}) of type {}'.format(i, type(m)))
+        super(Tank, self).__init__(max_speed)
+        self._motors = motors
 
     def go(self, cmds, smooth=None):
         """This function applies the user input to the motors' output according to drivetrain's
@@ -182,16 +81,12 @@ class Tank(Drivetrain):
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. If this parameter is not
-            specified, then the drivetrain's `smooth` attribute is used by default.
-            This can be disabled per motor by setting the :attr:`~drivetrain.motor.BiMotor.ramp_time`
+            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time` attribute. If this parameter is not specified, then the drivetrain's
+            :attr:`~drivetrain.helpers.smoothing_input.SmoothDrivetrain.smooth`
+            attribute is used by default. This can be disabled per motor by setting the
+            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time`
             attribute to ``0``, thus the smoothing algorithm is automatically bypassed despite this
             parameter's value.
-
-            .. note:: Assert this parameter (set as `True`) for robots with a rather high center of
-                gravity or if some parts are poorly attached. The absence of properly smoothed
-                acceleration/deceleration will likely make the robot fall over or loose parts
-                become dislodged on sudden and drastic changes in speed.
         """
         if len(cmds) < 2:
             raise ValueError(
@@ -224,7 +119,7 @@ class Tank(Drivetrain):
         super().go([left, right], smooth)
 
 
-class Automotive(Drivetrain):
+class Automotive(SmoothDrivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
     are separate tasks. The first motor is used to steer, and the second motor is used to
     propell. An example of this would be any remote control toy vehicle.
@@ -242,11 +137,12 @@ class Automotive(Drivetrain):
     def __init__(self, motors, max_speed=100):
         if len(motors) != 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
-        if not isinstance(motors[0], Smooth):
+        if not isinstance(motors[0], SmoothMotor):
             raise ValueError(type(motors[0]), 'unrecognized or unsupported motor object')
-        if not isinstance(motors[1], Smooth):
+        if not isinstance(motors[1], SmoothMotor):
             raise ValueError(type(motors[1]), 'unrecognized or unsupported motor object')
-        super(Automotive, self).__init__(motors, max_speed)
+        super(Automotive, self).__init__(max_speed)
+        self._motors = motors
 
     def go(self, cmds, smooth=None):
         """This function applies the user input to motor output according to drivetrain's motor
@@ -265,16 +161,12 @@ class Automotive(Drivetrain):
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. If this parameter is not
-            specified, then the drivetrain's `smooth` attribute is used by default.
-            This can be disabled per motor by setting the :attr:`~drivetrain.motor.BiMotor.ramp_time`
+            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time` attribute. If this parameter is not specified, then the drivetrain's
+            :attr:`~drivetrain.helpers.smoothing_input.SmoothDrivetrain.smooth`
+            attribute is used by default. This can be disabled per motor by setting the
+            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time`
             attribute to ``0``, thus the smoothing algorithm is automatically bypassed despite this
             parameter's value.
-
-            .. note:: Assert this parameter (set as `True`) for robots with a rather high center of
-                gravity or if some parts are poorly attached. The absence of properly smoothed
-                acceleration/deceleration will likely make the robot fall over or loose parts
-                become dislodged on sudden and drastic changes in speed.
         """
         if len(cmds) < 2:
             raise ValueError(
@@ -288,7 +180,7 @@ class Automotive(Drivetrain):
         super().go(cmds, smooth)
 
 
-class Locomotive(Drivetrain):
+class Locomotive(SmoothDrivetrain):
     """This class relies soley on one `Solenoid` object controlling 2 solenoids in tandem. Like
     with a locomotive train, applied force is alternated between the 2 solenoids using a
     boolean-ized pressure sensor or switch to determine when the applied force is alternated.
@@ -312,7 +204,8 @@ class Locomotive(Drivetrain):
             raise ValueError('this drivetrain only uses a 1 Solenoid object')
         if switch_pin is None:
             raise ValueError('this drivetrain requires an input switch.')
-        super(Locomotive, self).__init__([solenoids])
+        super(Locomotive, self).__init__()
+        self._motors = [solenoids]
         self._switch_pin = switch_pin
         self._switch_pin.switch_to_input()
         self._is_forward = True
@@ -378,7 +271,7 @@ class Locomotive(Drivetrain):
         return False
 
 
-class Mecanum(Drivetrain):
+class Mecanum(SmoothDrivetrain):
     """A Drivetrain class meant for motor configurations that involve 4 motors for propulsion
     and steering are shared tasks (like having 2 Tank Drivetrains). Each motor drives a single
     mecanum wheel which allows for the ability to strafe.
@@ -396,15 +289,15 @@ class Mecanum(Drivetrain):
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
     """
-
     def __init__(self, motors, max_speed=100):
         if len(motors) != 4:
             raise ValueError('The drivetrain requires 4 motors to operate.')
         for i, m in enumerate(motors):
-            if not isinstance(m, Smooth):
+            if not isinstance(m, SmoothMotor):
                 raise ValueError(
                     'unknown motor (index {}) of type {}'.format(i, type(m)))
-        super(Mecanum, self).__init__(motors, max_speed=max_speed)
+        super(Mecanum, self).__init__(max_speed=max_speed)
+        self._motors = motors
 
     def go(self, cmds, smooth=None):
         """This function applies the user input to the motors' output according to drivetrain's
@@ -425,16 +318,12 @@ class Mecanum(Drivetrain):
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.motor.BiMotor.ramp_time` attribute. If this parameter is not
-            specified, then the drivetrain's `smooth` attribute is used by default.
-            This can be disabled per motor by setting the :attr:`~drivetrain.motor.BiMotor.ramp_time`
+            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time` attribute. If this parameter is not specified, then the drivetrain's
+            :attr:`~drivetrain.helpers.smoothing_input.SmoothDrivetrain.smooth`
+            attribute is used by default. This can be disabled per motor by setting the
+            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time`
             attribute to ``0``, thus the smoothing algorithm is automatically bypassed despite this
             parameter's value.
-
-            .. note:: Assert this parameter (set as `True`) for robots with a rather high center of
-                gravity or if some parts are poorly attached. The absence of properly smoothed
-                acceleration/deceleration will likely make the robot fall over or loose parts
-                become dislodged on sudden and drastic changes in speed.
         """
         if len(cmds) < 3:
             raise ValueError(

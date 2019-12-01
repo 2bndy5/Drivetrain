@@ -32,9 +32,11 @@ except ImportError:
 # pwm2 = PWM(Pin(2), freq=500, duty=512) # create and configure in one go
 
 class PWMOut:
-    """A wrapper class to substitute the RPi.GPIO.PWM for pulseio.PWMOut
+    """A wrapper class to substitute the RPi.GPIO.PWM or `machine.Pin` for `pulseio.PWMOut`
 
-    :param ~microcontoller.Pin pin: The `board` module's pin to be used for PWM output
+    :param int,str pin: The pin name/number to be used for PWM output.
+        RPi.GPIO is configured to accept an `int` or `str` as the pin's BCM numbering scheme.
+        machine.Pin usually accepts an `int` or `str` ordering scheme usually printed on the board.
     :param int freq: The frewquency (in Hz) of the PWM output. Defaults to 500 Hz.
     :param int duty_cycle: The initial duty cycle of the PWM output. Ranges [0, 65535]
     """

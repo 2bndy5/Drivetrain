@@ -1,12 +1,12 @@
-""" a wrapper for micropython's machine.Pin object """
+""" a wrapper for micropython's :py:class:`~machine.Pin` object """
 # pylint: disable=import-error
 import machine
 
 class DigitalInOut:
-    """A class to control micropython's machine.Pin object like
+    """A class to control micropython's :py:class:`~machine.Pin` object like
     a circuitpython DigitalInOut object
 
-    :param ~microcontroller.Pin pin: the digital pin alias.
+    :param ~machine.Pin pin: the digital pin alias.
     """
     def __init__(self, pin):
         self._pin = machine.Pin(pin, machine.Pin.IN)

@@ -31,9 +31,9 @@ module. Includes Solenoid (parent base class), BiMotor & PhasedMotor (children o
 try:
     from digitalio import DigitalInOut
 except ImportError: # running on a MicroPython board
-    from .digitalout import DigitalInOut
+    from .helpers.digi_io import DigitalInOut
 from circuitpython_nrf24l01 import RF24
-from .smoothing_input import Smooth
+from .helpers.smoothing_input import SmoothMotor
 # pylint: disable=too-many-instance-attributes,too-few-public-methods,invalid-name
 
 class Solenoid:
@@ -98,7 +98,7 @@ class Solenoid:
         self._signals.clear()
 # end Solenoid parent class
 
-class BiMotor(Smooth):
+class BiMotor(SmoothMotor):
     """This class is meant be used for motors driven by driver boards/ICs that expect 2 PWM outputs
     . Each pin represent the controlling signal for the motor's speed in a single rotational
     direction.
@@ -161,7 +161,7 @@ class BiMotor(Smooth):
 # end BiMotor child class
 
 
-class PhasedMotor(Smooth):
+class PhasedMotor(SmoothMotor):
     """This class is meant be used for motors driven by driver boards/ICs that expect:
 
         * 1 PWM output (to control the motor's speed)

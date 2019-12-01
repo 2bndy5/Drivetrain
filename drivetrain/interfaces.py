@@ -2,15 +2,14 @@
 A colection of controlling interfaces for drivetrains (both external and internal).
 
 """
-import struct
 PYSERIAL = True
 try:
     from serial import Serial as UART
 except ImportError:
     PYSERIAL = False # not running on Win32 nor Linux
-    from .usart_serial_ctx import SerialUART as UART
+    from .helpers.usart_serial_ctx import SerialUART as UART
 from circuitpython_nrf24l01 import RF24
-from .buffer_mixin import BufferMixin
+from .helpers.buffer_mixin import BufferMixin
 
 IS_TREADED = PYSERIAL
 
@@ -31,17 +30,10 @@ class NRF24L01(BufferMixin):
         if not isinstance(nrf24_object, RF24):
             raise ValueError('nRf24L01 object not recognized or supported.')
         self._rf = nrf24_object
-        self._address = address
-        self.address = address
         self._rf.listen = False
         # self._rf.what_happened(1) # prints radio condition
-        self._prev_cmds = [None, None]
-        super(NRF24L01, self).__init__(cmd_template)
-
-    @property
-    def value(self):
-        """The most previous list of commands that were processed by the drivetrain object"""
-        return self._prev_cmds
+        super(NRF24L01, self).__init__(cmd_template=cmd_template, address=address)
+        self.address = address
 
     @property
     def address(self):
@@ -57,6 +49,19 @@ class NRF24L01(BufferMixin):
         self._rf.open_tx_pipe(address)
         self._rf.open_rx_pipe(1, address)
 
+    @property
+    def crc(self):
+        """The amount of bytes to used as a CRC checksum. This defaults to the maximum of 2.
+        See also the `crc <https://circuitpython-nrf24l01.readthedocs.io/en/stable/
+        api.html#circuitpython_nrf24l01.rf24.circuitpython_nrf24l01.rf24.RF24.RF24.crc>`_ attribute.
+        """
+        return self._rf.crc
+
+    @crc.setter
+    def crc(self, val):
+        assert 0 <= val <= 2
+        self._rf.crc = val
+
 class NRF24L01tx(NRF24L01):
     """This child class allows the remote controlling of an external drivetrain by transmitting
     commands to another MCU via the nRF24L01 transceiver. See also the :class:`~drivetrain.interfaces.NRF24L01` base class for
@@ -69,18 +74,8 @@ class NRF24L01tx(NRF24L01):
             using the nRF24L01. This `list`/`tuple` must have a length equal to the number of
             characters in the :py:attr:`~drivetrain.interfaces.NRF24L01.cmd_template` string.
         """
+        command = self._make_message(cmds)
         self._prev_cmds = cmds
-        command = self._fmt.encode() + b';'
-        for i, c in enumerate(self._fmt):
-            try:
-                command += struct.pack(c, cmds[i])
-            except struct.error:
-                raise ValueError("command argument, {cmds[i]}, not in range of datatype '{c}'. "
-                                 "Refer to 'Format Characters' in python's struct docs for "
-                                 "adequate datatype aliases.")
-            except IndexError:
-                raise ValueError("expected {} commands, but {} were given".format(
-                    len(self._fmt), len(cmds)))
         self._rf.send(command)
         # success = self._rf.send(command)
         # print('transmit', repr(cmds), 'returned:', success)
@@ -94,9 +89,9 @@ class NRF24L01rx(NRF24L01):
 
     See also the :class:`~drivetrain.interfaces.NRF24L01` base class for details about instantiation.
     """
-    def __init__(self, nrf24_object, drivetrain, address=b'rfpi0', cmd_template="ll"):
+    def __init__(self, nrf24_object, drivetrain, address=b'rfpi0', cmd_template='ll'):
         self._d_train = drivetrain
-        super(NRF24L01rx, self).__init__(nrf24_object, address=b'rfpi0', cmd_template=cmd_template)
+        super(NRF24L01rx, self).__init__(nrf24_object, address=address, cmd_template=cmd_template)
         self._rf.listen = True
 
     def sync(self):
@@ -105,13 +100,7 @@ class NRF24L01rx(NRF24L01):
         Any data that is waiting to be received is interpreted and passed to the drivetrain object."""
         if self._rf.any():
             rx = self._rf.recv()
-            fmt = b''
-            for i, byte in enumerate(rx):
-                if byte == 59: # found ';' now convert all prior chars to str & break
-                    # str() doesn't supprot "encoding" kwarg in circuitpython
-                    fmt = ''.join(chr(c) for c in rx[:i])
-                    break
-            self.go(list(struct.unpack(fmt, rx[len(fmt) + 1:])))
+            self.go(self._message_unpack(rx))
         if not IS_TREADED:
             self._d_train.sync()
 
@@ -135,19 +124,13 @@ class USB(BufferMixin):
     :param busio.UART,serial.Serial,machine.UART serial_object: The instantiated serial object to
         be used for the serial connection.
     """
-    def __init__(self, serial_object, cmd_template="ll"):
+    def __init__(self, serial_object, address=None, cmd_template='ll'):
         if not isinstance(serial_object, UART):
             raise ValueError("serial_object not recognized or unsupported")
         self._ser = serial_object
         # print('Successfully opened port {} @ {} to Arduino device'.format(address, baud))
         self._ser.close()
-        self._prev_cmds = [None, None]
-        super(USB, self).__init__(cmd_template)
-
-    @property
-    def value(self):
-        """The most previous list of commands that were processed by the drivetrain object"""
-        return self._prev_cmds
+        super(USB, self).__init__(cmd_template=cmd_template, address=address)
 
 class USBtx(USB):
     """This child class allows the remote controlling of an external drivetrain by transmitting
@@ -160,18 +143,8 @@ class USBtx(USB):
             connection. This `list`/`tuple` must have a length equal to the number of characters
             in the :py:attr:`~drivetrain.interfaces.USB.cmd_template` string.
         """
+        command = self._make_message(cmds)
         self._prev_cmds = cmds
-        command = self._fmt.encode() + b';'
-        for i, c in enumerate(self._fmt):
-            try:
-                command += struct.pack(c, cmds[i])
-            except struct.error:
-                raise ValueError("command argument, {cmds[i]}, not in range of datatype {i}. "
-                                 "Refer to 'Format Characters' in python's struct docs for "
-                                 "adequate datatype aliases.")
-            except IndexError:
-                raise ValueError("expected {} commands, but {} were given".format(
-                    len(self._fmt), len(cmds)))
         with self._ser:
             self._ser.write(command + b'\n') # terminate command w/ '\n' character for readline()
 
@@ -184,9 +157,9 @@ class USBrx(USB):
 
     See also the :class:`~drivetrain.interfaces.USB` base class for details about instantiation.
     """
-    def __init__(self, drivetrain, serial_object, cmd_template="ll"):
+    def __init__(self, drivetrain, serial_object, address=None, cmd_template='ll'):
         self._d_train = drivetrain
-        super(USBrx, self).__init__(serial_object=serial_object, cmd_template=cmd_template)
+        super(USBrx, self).__init__(serial_object, cmd_template=cmd_template, address=address)
 
     def sync(self):
         """Checks if there are new commands waiting in the USB serial device's input stream to be
@@ -195,21 +168,13 @@ class USBrx(USB):
         rx = b''
         with self._ser:
             if self._ser.in_waiting:
-                if PYSERIAL:
-                    # pyserial object doesn't use internal timeout value for read_line()
-                    rx = self._ser.read_until() # defaults to '\n' character
-                else:
-                    rx = self._ser.read_line()
+                rx = self._ser.read_until() # defaults to '\n' character
         if rx:
-            fmt = ''
-            for i, byte in enumerate(rx):
-                if byte == 59:
-                    fmt = str(rx[:i], encoding='utf-8')
-                    break
-            self.go(list(struct.unpack(fmt, rx[len(fmt) + 1 : -1]))) # ignore fmt & '\n
+            # ignore '\n' at the end
+            # nl_trimmed = rx if rx[-1:][0] != 10 else rx[: -1]
+            self.go(self._message_unpack(rx)) # ignore fmt + ';'
         if IS_TREADED:
             self._d_train.sync()
-
 
     def go(self, cmds):
         """Assembles a list of drivetrain commands from the received bytearray over the USB
@@ -221,4 +186,4 @@ class USBrx(USB):
             :py:attr:`~drivetrain.interfaces.USB.cmd_template` string.
         """
         self._prev_cmds = cmds
-        self._d_train.go(self.value)
+        self._d_train.go(cmds)

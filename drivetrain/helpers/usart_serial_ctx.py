@@ -1,6 +1,11 @@
-"""This module contains a wrapper class for MicroPython's machine.UART and
-CircuitPython's busio.UART class to work as a drop-in replacement to
-pySerial's serial.Serial` object with python's context manager."""
+"""
+This module contains a wrapper class for MicroPython's :py:class:`~machine.UART` or
+CircuitPython's :py:class:`~busio.UART` class with context manager compatibility to
+work as a drop-in replacement to
+:py:class:`~serial.Serial` object.
+
+.. note:: This helper class does not expose all the pySerial API. It's tailored to this library only.
+"""
 # pylint: disable=import-error,too-many-arguments
 MICROPY = False
 try:
@@ -13,7 +18,7 @@ class SerialUART(UART):
     """A wrapper class for MicroPython's machine.UART class to utilize python's context
     manager. This wrapper may be incomplete as it is specialized for use with this library
     only as a drop-in replacement for CircuitPython's `busio.UART` or PySerial's
-    `~serial.Serial` module API.
+    :py:class:`~serial.Serial` module API.
 
     :param ~microcontroller.Pin tx_pin: The pin used for sending data.
     :param ~microcontroller.Pin rx_pin: The pin used for receiving data.
@@ -61,8 +66,7 @@ class SerialUART(UART):
 
     def in_waiting(self):
         """The number of bytes waiting to be read on the open Serial port."""
-        with self:
-            return self.any()
+        return self.any()
 
     def close(self):
         """ deinitialize the port """
@@ -72,8 +76,9 @@ class SerialUART(UART):
         """return a `bytearray` of received data.
 
         :param int size: If left unspecified, returns everything in the buffer terminated
-            with a ``\n`` or internal timeout occurs. If specified, then returns everything the
-            buffer up to at most the ``size`` number of bytes or internal timeout occurs"""
+            with a ``\\n`` or internal timeout occurs. If specified, then returns everything from
+            the buffer up to at most the ``size`` number of bytes or internal timeout occurs.
+        """
         if size is None:
             return self.readline()
         return self.read(size)
