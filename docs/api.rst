@@ -91,6 +91,11 @@ Smoothing Algorithm
 .. autoclass:: drivetrain.helpers.smoothing_input.SmoothMotor
     :members:
 
+Motor Pool Object
+-------------------
+
+.. autoclass:: drivetrain.motor.MotorPool
+    :members:
 
 Solenoid
 ----------------

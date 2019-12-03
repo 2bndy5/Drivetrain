@@ -113,8 +113,8 @@ class NRF24L01rx(NRF24L01):
             must have a length equal to the number of characters in the
             :py:attr:`~drivetrain.interfaces.NRF24L01.cmd_template` string.
         """
-        self._prev_cmds = list(cmds)
-        self._d_train.go(self.value)
+        self._prev_cmds = cmds
+        self._d_train.go(cmds)
 
 class USB(BufferMixin):
     """

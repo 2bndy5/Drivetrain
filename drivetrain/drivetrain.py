@@ -62,7 +62,7 @@ class Tank(SmoothDrivetrain):
                 raise ValueError(
                     'unknown motor (index {}) of type {}'.format(i, type(m)))
         super(Tank, self).__init__(max_speed)
-        self._motors = motors
+        self._motor_pool = motors
 
     def go(self, cmds, smooth=None):
         """This function applies the user input to the motors' output according to drivetrain's
@@ -142,7 +142,7 @@ class Automotive(SmoothDrivetrain):
         if not isinstance(motors[1], SmoothMotor):
             raise ValueError(type(motors[1]), 'unrecognized or unsupported motor object')
         super(Automotive, self).__init__(max_speed)
-        self._motors = motors
+        self._motor_pool = motors
 
     def go(self, cmds, smooth=None):
         """This function applies the user input to motor output according to drivetrain's motor
@@ -205,7 +205,7 @@ class Locomotive(SmoothDrivetrain):
         if switch_pin is None:
             raise ValueError('this drivetrain requires an input switch.')
         super(Locomotive, self).__init__()
-        self._motors = [solenoids]
+        self._motor_pool = solenoids
         self._switch_pin = switch_pin
         self._switch_pin.switch_to_input()
         self._is_forward = True
@@ -260,7 +260,7 @@ class Locomotive(SmoothDrivetrain):
         (microcontroller units) that can't use the threading module."""
         alternate = (1 if self._switch_pin.value else -1) * \
             (-1 if self._is_forward else 1)
-        self._motors[0].go(alternate)
+        self._motor_pool.go(alternate)
 
     @property
     def is_cellerating(self):
@@ -297,7 +297,7 @@ class Mecanum(SmoothDrivetrain):
                 raise ValueError(
                     'unknown motor (index {}) of type {}'.format(i, type(m)))
         super(Mecanum, self).__init__(max_speed=max_speed)
-        self._motors = motors
+        self._motor_pool = motors
 
     def go(self, cmds, smooth=None):
         """This function applies the user input to the motors' output according to drivetrain's

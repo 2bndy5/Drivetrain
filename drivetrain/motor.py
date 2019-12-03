@@ -20,13 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 """
-================================
-Solenoid, BiMotor, & PhasedMotor
-================================
-
 A collection of driver classes for different single phase DC motors implementing the threading
-module. Includes Solenoid (parent base class), BiMotor & PhasedMotor (children of Solenoid)
-
+module.
 """
 try:
     from digitalio import DigitalInOut
@@ -34,7 +29,77 @@ except ImportError: # running on a MicroPython board
     from .helpers.digi_io import DigitalInOut
 from circuitpython_nrf24l01 import RF24
 from .helpers.smoothing_input import SmoothMotor
-# pylint: disable=too-many-instance-attributes,too-few-public-methods,invalid-name
+# pylint: disable=too-few-public-methods,invalid-name
+
+class MotorPool(list):
+    """A grouping object for various different motors. This object coordinates the motor input
+    commands with the motor objects, but optimizes the number of times the communication buses are
+    used for the entire motor pool."""
+    def __init__(self, motors):
+        for i, m in enumerate(motors):
+            if not isinstance(m, (SmoothMotor, Solenoid)):
+                raise ValueError("unrecognized or unsupported motor object type"
+                                 " {} in list at index {}".format(type(m), i))
+        self._motors = motors
+
+    def go(self, cmds, smooth=True):
+        """This function takes the input commands and passes them to the motors.
+
+        :param list,tuple cmds: A `list` or `tuple` of values to be passed to the motors.
+        :param bool smooth: This controls the motors' built-in algorithm that smooths input values
+            over a period of time (in milliseconds) contained in the motors'
+            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time` attribute. This can be
+            disabled per motor by setting the
+            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time` attribute to ``0``, thus
+            the smoothing algorithm is automatically bypassed despite this parameter's value.
+        """
+        # for i, cmd in enumerate(cmds):
+        #     if i < len(self._motors):
+        #         if smooth: # if input is getting smoothed
+        #             self._motors[i].cellerate(cmd)
+        #         else:
+        #             self._motors[i].value = cmd
+
+        i = 0
+        while i < len(self._motors):
+            skip = len(self._motors[i])
+            for j in range(skip):
+                if smooth:
+                    self._motors[i + j].cellerate(cmds[i + j])
+                else:
+                    self._motors[i + j].value = cmds[i + j]
+            i += skip
+
+    @property
+    def is_cellerating(self):
+        for m in self._motors:
+            if m.is_cellerating:
+                return True
+        return False
+
+    def sync(self):
+        """This function will trigger each motor's asynchronous code to execute (mainly used for
+        smoothing inputs). See also :py:meth:`~drivetrain.helpers.smoothing_input.SmoothMotor.sync()`
+        """
+        for m in self._motors:
+            m.sync()
+
+    def __getitem__(self, key):
+        return self._motors[key]
+
+    def __len__(self):
+        return len(self._motors)
+
+    def __iter__(self):
+        self._it = 0
+        return self
+
+    def __next__(self):
+        if self._it < len(self._motors) - 1:
+            self._it += 1
+            return self._motors[self._it]
+        del self._it
+        raise StopIteration
 
 class Solenoid:
     """This class is meant be used to control up to 2 solenoids (see also `value` attribute
@@ -74,18 +139,11 @@ class Solenoid:
     @value.setter
     def value(self, val):
         val = max(-1, min(1, int(val)))
-        # going forward
-        if val > 0:
-            self._signals[0] = True
+        if val: # going forward == val is positive; going backward == val is negative
+            self._signals[0].value = True if val > 0 else False
             if len(self._signals) > 1:
-                self._signals[1] = False
-        # going backward
-        elif val < 0:
-            self._signals[0] = False
-            if len(self._signals) > 1:
-                self._signals[1] = True
-        # otherwise stop
-        else:
+                self._signals[1].value = not (True if val > 0 else False)
+        else: # otherwise stop
             self._signals[0] = False
             if len(self._signals) > 1:
                 self._signals[1] = False
@@ -143,21 +201,20 @@ class BiMotor(SmoothMotor):
     @value.setter
     def value(self, val):
         val = max(-65535, min(65535, int(val)))
-        # going forward
-        if val > 0:
-            self._signals[0].duty_cycle = val
+        if val: # going forward == val is positive; going backward == val is negative
+            self._signals[0].duty_cycle = val if val > 0 else 0
             if len(self._signals) > 1:
-                self._signals[1].duty_cycle = 0
-        # going backward
-        elif val < 0:
-            self._signals[0].duty_cycle = 0
-            if len(self._signals) > 1:
-                self._signals[1].duty_cycle = (val * -1)
-        # otherwise stop
-        else:
+                self._signals[1].duty_cycle = val * (-1 if val < 0 else 0)
+        else: # otherwise stop
             self._signals[0].duty_cycle = 0
             if len(self._signals) > 1:
                 self._signals[1].duty_cycle = 0
+
+    def __del__(self):
+        super().__del__()
+        for signal in self._signals:
+            signal.deinit()
+        self._signals.clear()
 # end BiMotor child class
 
 
@@ -209,16 +266,17 @@ class PhasedMotor(SmoothMotor):
     @value.setter
     def value(self, val):
         val = max(-65535, min(65535, int(val)))
-        # going forward
-        if val > 0:
-            self._signals[0].value = True
-            self._signals[1].duty_cycle = val
-        # going backward
-        elif val < 0:
-            self._signals[0].value = False
-            self._signals[1].duty_cycle = (val * -1)
+        if val: # going forward == val is positive; going backward == val is negative
+            self._signals[0].value = val > 0
+            self._signals[1].duty_cycle = val * (-1 if val < 0 else 1)
         # otherwise stop
         else:
             self._signals[0].value = False
             self._signals[1].duty_cycle = 0
+
+    def __del__(self):
+        super().__del__()
+        for signal in self._signals:
+            signal.deinit()
+        self._signals.clear()
 # end PhasedMotor child class

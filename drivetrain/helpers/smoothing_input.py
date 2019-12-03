@@ -113,16 +113,22 @@ class SmoothMotor:
         else:
             self.sync()
 
+    def __len__(self):
+        return 1
+
     def __del__(self):
-        self._cancel_thread = False
+        if self.value:
+            self.value = 0
+        self._cancel_thread = True
         if self._smoothing_thread is not None:
-            del self._smoothing_thread
+            self._stop_thread()
+        del self._smoothing_thread,  self._value, self._init_speed, self._target_speed, self._init_smooth, self._end_smooth, self._dt, self._smoothing_thread, self._cancel_thread
 
 class SmoothDrivetrain:
     """A base class that is only used for inheriting various types of drivetrain configurations."""
     def __init__(self, max_speed=100, smooth=True):
         #  prototype motors lust to avoid error in __del__ on exceptions
-        self._motors = []
+        self._motor_pool = None
         self._max_speed = max(0, min(max_speed, 100))
         self._prev_cmds = [0, 0]
         self._smooth = smooth
@@ -140,31 +146,28 @@ class SmoothDrivetrain:
         """This function should be used at least once per main loop iteration. It will trigger each
         motor's subsequent sync(), thus applying the smoothing input operations if needed. This is
         not needed if the smoothing algorithms are not utilized/necessary in the application"""
-        for motor in self._motors:
-            motor.sync()
+        self._motor_pool.sync()
 
     def stop(self):
         """This function will stop all motion in the drivetrain's motors"""
         commands = []
-        for _ in self._motors:
+        for _ in range(len(self._motor_pool)):
             commands.append(0)
         self.go(commands)
 
     def go(self, cmds, smooth=None):
-        """A helper function to the child classes to handle extra periphial motors attached to the
-        Drivetrain object. This is only useful for motors that serve a specialized purpose
-        other than propulsion.
+        """A helper function to the child classes to handle all motors attached to the
+        Drivetrain object.
 
-        :param list,tuple cmds: A `list` or `tuple` of `int` motor input values to be passed in
-            corresponding order to the motors. Each input value must be on range [-65535, 65535].
-
+        :param list,tuple cmds: A `list` or `tuple` of drivetrain input values to be
+            interpreted and passed to the motors.
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time` attribute. If this parameter is not
-            specified, then the drivetrain's `smooth` attribute is used by default.
-            This can be disabled per motor by setting the :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time`
-            attribute to ``0``, thus the smoothing algorithm is automatically bypassed despite this
-            parameter's value.
+            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time` attribute. If this parameter
+            is not specified, then the drivetrain's `smooth` attribute is used by default.
+            This can be disabled per motor by setting the
+            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time` attribute to ``0``, thus
+            the smoothing algorithm is automatically bypassed despite this parameter's value.
 
             .. note:: Assert this parameter (set as `True`) for robots with a rather high center of
                 gravity or if some parts are poorly attached. The absence of properly smoothed
@@ -172,27 +175,22 @@ class SmoothDrivetrain:
                 become dislodged on sudden and drastic changes in speed.
         """
         self._prev_cmds = cmds
-        for i, cmd in enumerate(cmds):
-            if i < len(self._motors):
-                if (smooth if smooth is not None else self._smooth):
-                    # if input is getting smoothed
-                    self._motors[i].cellerate(cmd)
-                else:
-                    self._motors[i].value = cmd
+        # pylint disable=no-member
+        self._motor_pool.go(cmds, smooth=(smooth if smooth is not None else self._smooth))
+        # pylint enable=no-member
         self.sync()
 
     @property
     def value(self):
+        """This attribute returns the last `list`/`tuple` of drivetrain commands passed to
+        :py:meth:`~drivetrain.helpers.smoothing_input.SmoothDrivetrain.go()` (read-only)"""
         return self._prev_cmds
 
     @property
     def is_cellerating(self):
-        """This attribute contains a `bool` indicating if the drivetrain's motors' speed is in the
-        midst of changing. (read-only)"""
-        for m in self._motors:
-            if m.is_cellerating:
-                return True
-        return False
+        """This attribute contains a `bool` indicating if any the drivetrain's motors' speed is
+        in the midst of changing. (read-only)"""
+        return self._motor_pool.is_cellerating
 
     @property
     def max_speed(self):
@@ -203,14 +201,8 @@ class SmoothDrivetrain:
     def max_speed(self, val):
         self._max_speed = max(0, min(val if val is not None else 0, 100))
 
-    def __repr__(self):
-        """Aggregates all the motors current values into a printable string."""
-        output = ''
-        for i, m in self._motors:
-            output += 'motor {} value = {}'.format(i, m.value)
-            if i != len(self._motors) - 1:
-                output += ','
+    def __len__(self):
+        return 1
 
     def __del__(self):
-        self._motors.clear()
-        del self._motors
+        del self._motor_pool, self._max_speed, self._prev_cmds, self._smooth
