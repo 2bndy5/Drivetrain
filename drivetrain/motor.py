@@ -31,16 +31,25 @@ from circuitpython_nrf24l01 import RF24
 from .helpers.smoothing_input import SmoothMotor
 # pylint: disable=too-few-public-methods,invalid-name
 
-class MotorPool(list):
+class MotorPool:
     """A grouping object for various different motors. This object coordinates the motor input
     commands with the motor objects, but optimizes the number of times the communication buses are
-    used for the entire motor pool."""
-    def __init__(self, motors):
-        for i, m in enumerate(motors):
-            if not isinstance(m, (SmoothMotor, Solenoid)):
-                raise ValueError("unrecognized or unsupported motor object type"
-                                 " {} in list at index {}".format(type(m), i))
-        self._motors = motors
+    used for the entire motor pool.
+
+    :param list,tuple motors: This `list` or `tuple` of motors will be used for outputting
+        motor signal(s) from the user input drivetrain commands. Each item in this list
+        must be a `SmoothMotor` or `Solenoid` type object. This parameter isn't
+        strictly required during instantiation and the internal motors `list` can be altered via
+        the `insert()`, `append()`, `pop()`, and `remove()` methods.
+    """
+    def __init__(self, motors=None):
+        self._motors = []
+        if motors is not None:
+            for i, m in enumerate(motors):
+                if not isinstance(m, (SmoothMotor, Solenoid)):
+                    raise ValueError("unrecognized or unsupported motor object type"
+                                     " {} in list at index {}".format(type(m), i))
+            self._motors = list(motors)
 
     def go(self, cmds, smooth=True):
         """This function takes the input commands and passes them to the motors.
@@ -79,10 +88,53 @@ class MotorPool(list):
 
     def sync(self):
         """This function will trigger each motor's asynchronous code to execute (mainly used for
-        smoothing inputs). See also :py:meth:`~drivetrain.helpers.smoothing_input.SmoothMotor.sync()`
+        smoothing inputs). See also :meth:`~drivetrain.helpers.smoothing_input.SmoothMotor.sync`.
         """
         for m in self._motors:
             m.sync()
+
+    def insert(self, index, obj):
+        """Use this function to insert a motor into the `MotorPool` object's internal motors `list`.
+
+        :param int index: The position in the `list` of motors to insert the object at.
+        :param Solenoid,SmoothMotor obj: The motor object to be inserted into the `list` of motors.
+        """
+        if not isinstance(obj, (SmoothMotor, Solenoid)):
+            raise ValueError("unrecognized or unsupported motor object type {}".format(type(obj)))
+        self._motors.insert(index, obj)
+
+    def remove(self, obj):
+        """Use this function to remove a specific item from the `MotorPool` object's internal motors
+        `list`. This function does not release the pins associated with the motor object, so
+        you can re-use the motor object for a different `MotorPool` object. To release the pins
+        used by a motor object, you need only delete the object (eg. ``del
+        motor_object_variable_name``).
+
+        :param Solenoid,SmoothMotor obj: The motor object to be removed from the `list` of motors.
+        """
+        self._motors.remove(obj)
+
+    def append(self, obj):
+        """Use this function to append to the end of the `MotorPool` object's internal motors
+        `list`.
+
+        :param Solenoid,SmoothMotor obj: The motor object to be appended to the `list` of motors.
+        """
+        if not isinstance(obj, (SmoothMotor, Solenoid)):
+            raise ValueError("unrecognized or unsupported motor object type {}".format(type(obj)))
+        self._motors.append(obj)
+
+    def pop(self, index):
+        """Use this function to remove an item from the `MotorPool` object's internal motors
+        `list`. This function also returns the object removed from the `list`, however the pins
+        are not released meaning the motor object can still be used for another `MotorPool` object.
+        To release the pins used by a motor object, you need only delete the object (eg. ``del
+        motor_object_variable_name``).
+
+        :param int index: The position of the motor object to be removed from the `list` of motors.
+        """
+        if index in range(len(self._motors) - 1):
+            return self._motors.pop(index)
 
     def __getitem__(self, key):
         return self._motors[key]
@@ -106,21 +158,23 @@ class Solenoid:
     for more details) as in the case of an actual locomotive train. Solenoids, by nature, cannot
     be controlled dynamically (cannot be any value other than `True` or `False`).
 
-    :param list pins: A `list` of (`board` module's) :py:class:`~microcontoller.Pin` numbers that
-        are used to drive the solenoid(s). The length of this `list` must be in range [1, 2] (any
-        additional items/pins will be ignored).
+    :param ~digitalio.DigitalInOut,drivetrain.helpers.digi_io.DigitalInOut pos_pin: The digital
+        output pin to control the first solenoid.
+    :param ~digitalio.DigitalInOut,drivetrain.helpers.digi_io.DigitalInOut neg_pin: The digital
+        output pin to control the second solenoid.
+
+    .. note:: this class was primarily intended for abstract inheritence, thus the pin parameters
+        are optional.
     """
-    def __init__(self, plus_pin=None, neg_pin=None):
-        len_pins = bool(plus_pin is not None) + bool(neg_pin is not None)
-        if not len_pins:
-            raise ValueError('The number of pins used must be at least 1.')
+    def __init__(self, pos_pin=None, neg_pin=None):
         self._signals = []
-        for i in range(len_pins):
-            if plus_pin is not None:
-                self._signals.append(plus_pin)
-            elif neg_pin is not None:
+        if pos_pin is not None and neg_pin is not None:
+            if pos_pin is not None:
+                pos_pin.switch_to_output(False)
+                self._signals.append(pos_pin)
+            if neg_pin is not None:
+                neg_pin.switch_to_output(False)
                 self._signals.append(neg_pin)
-            self._signals[i].switch_to_output(False)
 
     @property
     def value(self):
@@ -148,25 +202,27 @@ class Solenoid:
             if len(self._signals) > 1:
                 self._signals[1] = False
 
-    def __del__(self):
+    def deinit(self):
+        """ initialize the pins associated with the solenoid(s) """
         if self.value:
             self.value = 0
         for signal in self._signals:
             signal.deinit()
+
+    def __del__(self):
+        self.deinit()
         self._signals.clear()
 # end Solenoid parent class
 
-class BiMotor(SmoothMotor):
+class BiMotor(SmoothMotor, Solenoid):
     """This class is meant be used for motors driven by driver boards/ICs that expect 2 PWM outputs
     . Each pin represent the controlling signal for the motor's speed in a single rotational
     direction.
 
-    :param list pins: A `list` of (`board` module's) :py:class:`~microcontoller.Pin` numbers that
-        are used to drive the motor. The length of this `list` or `tuple` must be in range [1, 2];
-        any additional items/pins will be ignored, and a `ValueError` exception is thrown if no
-        pins are passed (an empty `tuple`/`list`). If only 1 pin is passed, then the motor will
-        only rotate in 1 direction depending on how the motor is connected to the motor driver.
-
+    :param ~pulseio.PWMOut,drivetrain.helpers.pwm.PWMOut pos_pin: The PWM output pin to control
+        the motor's speed rotating forwards.
+    :param ~pulseio.PWMOut,drivetrain.helpers.pwm.PWMOut neg_pin: The PWM output pin to control
+        the motor's speed rotating backwards.
     :param int ramp_time: The time (in milliseconds) that is used to smooth the motor's input.
         Default is 500. This time represents the maximum amount of time that the input will be
         smoothed. Since the change in speed is also used to determine how much time will be used
@@ -175,18 +231,16 @@ class BiMotor(SmoothMotor):
         either full reverse or full forward, then the time it takes to do that will be half of
         this parameter's value. This can be changed at any time by changing the `ramp_time`
         attribute.
+
+    .. note:: If only 1 pin is passed, then the motor will only rotate in 1 direction depending on
+        how the motor is connected to the motor driver. Tthis class assumes that the one direction
+        it is rotating is the forward direction (``plus_pin`` parameter).
     """
-    def __init__(self, plus_pin=None, neg_pin=None, ramp_time=500):
-        len_pins = bool(plus_pin is not None) + bool(neg_pin is not None)
-        if not len_pins:
-            raise ValueError('The number of pins used must be at least 1.')
-        self._signals = []
-        for _ in range(len_pins):
-            if plus_pin is not None:
-                self._signals.append(plus_pin)
-            elif neg_pin is not None:
-                self._signals.append(neg_pin)
-        super(BiMotor, self).__init__(ramp_time)
+    def __init__(self, pos_pin, neg_pin=None, ramp_time=500):
+        super(BiMotor, self).__init__(ramp_time=ramp_time)
+        self._signals = [pos_pin]
+        if neg_pin is not None:
+            self._signals.append(neg_pin)
 
     @property
     def value(self):
@@ -209,29 +263,18 @@ class BiMotor(SmoothMotor):
             self._signals[0].duty_cycle = 0
             if len(self._signals) > 1:
                 self._signals[1].duty_cycle = 0
-
-    def __del__(self):
-        super().__del__()
-        for signal in self._signals:
-            signal.deinit()
-        self._signals.clear()
 # end BiMotor child class
 
-
-class PhasedMotor(SmoothMotor):
+class PhasedMotor(SmoothMotor, Solenoid):
     """This class is meant be used for motors driven by driver boards/ICs that expect:
 
         * 1 PWM output (to control the motor's speed)
         * 1 digital output (to control the motor's rotational direction)
 
-    :param list pins: A `list` of (`board` module's) :py:class:`~microcontoller.Pin` numbers that
-        are used to drive the motor. The length of this `list`/`tuple` must be 2, otherwise a
-        `ValueError` exception is thrown.
-
-        .. note:: The first pin in the `tuple`/`list` is used for the digital output signal
-            that signifies the motor's rotational direction. The second pin is used for PWM output
-            that signifies the motor's speed.
-
+    :param ~digitalio.DigitalInOut,drivetrain.helpers.digi_io.DigitalInOut phased_pin: The digital
+        output pin to control the motor's rotational direction.
+    :param ~pulseio.PWMOut,drivetrain.helpers.pwm.PWMOut pwm_pin: The PWM output pin to control
+        the motor's speed.
     :param int ramp_time: The time (in milliseconds) that is used to smooth the motor's input.
         Default is 500. This time represents the maximum amount of time that the input will be
         smoothed. Since the change in speed is also used to determine how much time will be used
@@ -241,18 +284,11 @@ class PhasedMotor(SmoothMotor):
         this parameter's value. This can be changed at any time by changing the `ramp_time`
         attribute.
     """
-    def __init__(self, phased_pin=None, pwm_pin=None, ramp_time=500):
-        len_pins = bool(phased_pin is not None) + bool(pwm_pin is not None)
-        if len_pins != 2:
-            raise ValueError('The number of pins used must be 2.')
-        self._signals = []
-        for _ in range(len_pins):
-            if phased_pin is not None:
-                self._signals.insert(0, phased_pin)
-                self._signals[0].switch_to_output(False)
-            elif pwm_pin is not None:
-                self._signals.insert(1, pwm_pin)
-        super(PhasedMotor, self).__init__(ramp_time)
+    def __init__(self, phased_pin, pwm_pin, ramp_time=500):
+        super(PhasedMotor, self).__init__(ramp_time=ramp_time)
+        self._signals.insert(0, phased_pin)
+        self._signals[0].switch_to_output(False)
+        self._signals.insert(1, pwm_pin)
 
     @property
     def value(self):
@@ -273,10 +309,4 @@ class PhasedMotor(SmoothMotor):
         else:
             self._signals[0].value = False
             self._signals[1].duty_cycle = 0
-
-    def __del__(self):
-        super().__del__()
-        for signal in self._signals:
-            signal.deinit()
-        self._signals.clear()
 # end PhasedMotor child class

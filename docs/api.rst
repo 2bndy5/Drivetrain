@@ -130,7 +130,7 @@ Roboclaw Bus object helper class
     :members:
     :show-inheritance:
 
-Aditional Helpers
+Additional Helpers
 ===============================
 
 DigitalInOut For MicroPython

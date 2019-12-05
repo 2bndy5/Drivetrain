@@ -19,6 +19,7 @@ class SmoothMotor:
         self._dt = ramp_time
         self._smoothing_thread = None
         self._cancel_thread = not IS_THREADED
+        super().__init__()
 
     @property
     def ramp_time(self):
@@ -42,7 +43,7 @@ class SmoothMotor:
     def _start_thread(self):
         if self._smoothing_thread is not None:
             self._stop_thread()
-        self._smoothing_thread = Thread(target=self._smooth)
+        self._smoothing_thread = Thread(target=self._smooth_loop)
         self._smoothing_thread.start()
 
     def _stop_thread(self):
@@ -51,7 +52,7 @@ class SmoothMotor:
             self._smoothing_thread.join()
             self._cancel_thread = False
 
-    def _smooth(self):
+    def _smooth_loop(self):
         while not self._cancel_thread:
             self.sync()
             if self._cancel_thread:
@@ -123,6 +124,7 @@ class SmoothMotor:
         if self._smoothing_thread is not None:
             self._stop_thread()
         del self._smoothing_thread,  self._value, self._init_speed, self._target_speed, self._init_smooth, self._end_smooth, self._dt, self._smoothing_thread, self._cancel_thread
+        # super().__del__()
 
 class SmoothDrivetrain:
     """A base class that is only used for inheriting various types of drivetrain configurations."""

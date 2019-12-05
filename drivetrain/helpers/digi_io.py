@@ -11,7 +11,8 @@ class DigitalInOut:
     def __init__(self, pin):
         self._pin = machine.Pin(pin, machine.Pin.IN)
 
-    def __deinit__(self):
+    def deinit(self):
+        """ deinitialize the GPIO pin """
         self._pin.deinit()
 
     def switch_to_output(self, value=False):
