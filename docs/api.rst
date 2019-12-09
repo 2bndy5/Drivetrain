@@ -16,7 +16,7 @@ Motor Pool Object
 Smoothing Algorithm
 -------------------
 
-.. autoclass:: drivetrain.helpers.smoothing_input.SmoothMotor
+.. autoclass:: drivetrain.smoothing_input.SmoothMotor
     :members:
 
 Solenoid
@@ -53,7 +53,7 @@ Drivetrain Configurations
 Smoothing Algorithm
 -------------------
 
-.. autoclass:: drivetrain.helpers.smoothing_input.SmoothDrivetrain
+.. autoclass:: drivetrain.smoothing_input.SmoothDrivetrain
     :members:
 
 Tank Drivetrain
@@ -89,7 +89,7 @@ Drivetrain Interfaces
 Buffer Mixin
 ------------
 
-.. autoclass:: drivetrain.helpers.buffer_mixin.BufferMixin
+.. autoclass:: drivetrain.buffer_mixin.BufferMixin
     :members:
 
 NRF24L01
@@ -135,23 +135,23 @@ Additional Helpers
 DigitalInOut For MicroPython
 ----------------------------
 
-.. automodule:: drivetrain.helpers.digi_io
+.. automodule:: drivetrain.digi_io
     :members:
 
 PWMOut For MicroPython & RPi.GPIO
 ----------------------------------
 
-.. automodule:: drivetrain.helpers.pwm
+.. automodule:: drivetrain.pwm
     :members:
 
 UART Serial for Non-PySerial supported platforms
 --------------------------------------------------
 
-.. automodule:: drivetrain.helpers.usart_serial_ctx
+.. automodule:: drivetrain.usart_serial_ctx
     :members:
 
 Cylical Redundancy Checking
 ------------------------------
 
-.. automodule:: drivetrain.helpers.data_manip
+.. automodule:: drivetrain.data_manip
     :members:

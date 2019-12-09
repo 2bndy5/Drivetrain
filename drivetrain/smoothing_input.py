@@ -185,7 +185,7 @@ class SmoothDrivetrain:
     @property
     def value(self):
         """This attribute returns the last `list`/`tuple` of drivetrain commands passed to
-        :py:meth:`~drivetrain.helpers.smoothing_input.SmoothDrivetrain.go()` (read-only)"""
+        :py:meth:`~drivetrain.smoothing_input.SmoothDrivetrain.go()` (read-only)"""
         return self._prev_cmds
 
     @property

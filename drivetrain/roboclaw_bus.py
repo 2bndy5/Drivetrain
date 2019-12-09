@@ -1,7 +1,7 @@
 """A helper module that allows manipulating the Roboclaw device like a
 `BiMotor` object compatible with `MotorPool` API"""
 # pylint: disable=too-many-function-args
-from .helpers.smoothing_input import SmoothMotor
+from .smoothing_input import SmoothMotor
 
 class RoboclawChannels(SmoothMotor):
     """A class to use one motor's set of terminals on a Roboclaw device.

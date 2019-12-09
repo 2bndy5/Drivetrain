@@ -32,7 +32,7 @@ configurations for the raspberry pi. Currently only supporting the R2D2 (aliased
 # pylint: disable=arguments-differ,invalid-name
 from .stepper import StepperMotor
 from .motor import Solenoid
-from .helpers.smoothing_input import SmoothMotor, SmoothDrivetrain
+from .smoothing_input import SmoothMotor, SmoothDrivetrain
 
 IS_THREADED = True
 try:
@@ -82,10 +82,10 @@ class Tank(SmoothDrivetrain):
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time` attribute. If this parameter is not specified, then the drivetrain's
-            :attr:`~drivetrain.helpers.smoothing_input.SmoothDrivetrain.smooth`
+            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time` attribute. If this parameter is not specified, then the drivetrain's
+            :attr:`~drivetrain.smoothing_input.SmoothDrivetrain.smooth`
             attribute is used by default. This can be disabled per motor by setting the
-            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time`
+            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time`
             attribute to ``0``, thus the smoothing algorithm is automatically bypassed despite this
             parameter's value.
         """
@@ -160,10 +160,10 @@ class Automotive(SmoothDrivetrain):
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time` attribute. If this parameter is not specified, then the drivetrain's
-            :attr:`~drivetrain.helpers.smoothing_input.SmoothDrivetrain.smooth`
+            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time` attribute. If this parameter is not specified, then the drivetrain's
+            :attr:`~drivetrain.smoothing_input.SmoothDrivetrain.smooth`
             attribute is used by default. This can be disabled per motor by setting the
-            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time`
+            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time`
             attribute to ``0``, thus the smoothing algorithm is automatically bypassed despite this
             parameter's value.
         """
@@ -317,10 +317,10 @@ class Mecanum(SmoothDrivetrain):
 
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time` attribute. If this parameter is not specified, then the drivetrain's
-            :attr:`~drivetrain.helpers.smoothing_input.SmoothDrivetrain.smooth`
+            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time` attribute. If this parameter is not specified, then the drivetrain's
+            :attr:`~drivetrain.smoothing_input.SmoothDrivetrain.smooth`
             attribute is used by default. This can be disabled per motor by setting the
-            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time`
+            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time`
             attribute to ``0``, thus the smoothing algorithm is automatically bypassed despite this
             parameter's value.
         """

@@ -7,9 +7,9 @@ try:
     from serial import Serial as UART
 except ImportError:
     PYSERIAL = False # not running on Win32 nor Linux
-    from .helpers.usart_serial_ctx import SerialUART as UART
+    from .usart_serial_ctx import SerialUART as UART
 from circuitpython_nrf24l01 import RF24
-from .helpers.buffer_mixin import BufferMixin
+from .buffer_mixin import BufferMixin
 
 IS_TREADED = PYSERIAL
 

@@ -26,9 +26,9 @@ module.
 try:
     from digitalio import DigitalInOut
 except ImportError: # running on a MicroPython board
-    from .helpers.digi_io import DigitalInOut
+    from .digi_io import DigitalInOut
 from circuitpython_nrf24l01 import RF24
-from .helpers.smoothing_input import SmoothMotor
+from .smoothing_input import SmoothMotor
 # pylint: disable=too-few-public-methods,invalid-name
 
 class MotorPool:
@@ -57,9 +57,9 @@ class MotorPool:
         :param list,tuple cmds: A `list` or `tuple` of values to be passed to the motors.
         :param bool smooth: This controls the motors' built-in algorithm that smooths input values
             over a period of time (in milliseconds) contained in the motors'
-            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time` attribute. This can be
+            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time` attribute. This can be
             disabled per motor by setting the
-            :attr:`~drivetrain.helpers.smoothing_input.SmoothMotor.ramp_time` attribute to ``0``, thus
+            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time` attribute to ``0``, thus
             the smoothing algorithm is automatically bypassed despite this parameter's value.
         """
         # for i, cmd in enumerate(cmds):
@@ -88,7 +88,7 @@ class MotorPool:
 
     def sync(self):
         """This function will trigger each motor's asynchronous code to execute (mainly used for
-        smoothing inputs). See also :meth:`~drivetrain.helpers.smoothing_input.SmoothMotor.sync`.
+        smoothing inputs). See also :meth:`~drivetrain.smoothing_input.SmoothMotor.sync`.
         """
         for m in self._motors:
             m.sync()
@@ -158,9 +158,9 @@ class Solenoid:
     for more details) as in the case of an actual locomotive train. Solenoids, by nature, cannot
     be controlled dynamically (cannot be any value other than `True` or `False`).
 
-    :param ~digitalio.DigitalInOut,drivetrain.helpers.digi_io.DigitalInOut pos_pin: The digital
+    :param ~digitalio.DigitalInOut,drivetrain.digi_io.DigitalInOut pos_pin: The digital
         output pin to control the first solenoid.
-    :param ~digitalio.DigitalInOut,drivetrain.helpers.digi_io.DigitalInOut neg_pin: The digital
+    :param ~digitalio.DigitalInOut,drivetrain.digi_io.DigitalInOut neg_pin: The digital
         output pin to control the second solenoid.
 
     .. note:: this class was primarily intended for abstract inheritence, thus the pin parameters
@@ -219,9 +219,9 @@ class BiMotor(SmoothMotor, Solenoid):
     . Each pin represent the controlling signal for the motor's speed in a single rotational
     direction.
 
-    :param ~pulseio.PWMOut,drivetrain.helpers.pwm.PWMOut pos_pin: The PWM output pin to control
+    :param ~pulseio.PWMOut,drivetrain.pwm.PWMOut pos_pin: The PWM output pin to control
         the motor's speed rotating forwards.
-    :param ~pulseio.PWMOut,drivetrain.helpers.pwm.PWMOut neg_pin: The PWM output pin to control
+    :param ~pulseio.PWMOut,drivetrain.pwm.PWMOut neg_pin: The PWM output pin to control
         the motor's speed rotating backwards.
     :param int ramp_time: The time (in milliseconds) that is used to smooth the motor's input.
         Default is 500. This time represents the maximum amount of time that the input will be
@@ -271,9 +271,9 @@ class PhasedMotor(SmoothMotor, Solenoid):
         * 1 PWM output (to control the motor's speed)
         * 1 digital output (to control the motor's rotational direction)
 
-    :param ~digitalio.DigitalInOut,drivetrain.helpers.digi_io.DigitalInOut phased_pin: The digital
+    :param ~digitalio.DigitalInOut,drivetrain.digi_io.DigitalInOut phased_pin: The digital
         output pin to control the motor's rotational direction.
-    :param ~pulseio.PWMOut,drivetrain.helpers.pwm.PWMOut pwm_pin: The PWM output pin to control
+    :param ~pulseio.PWMOut,drivetrain.pwm.PWMOut pwm_pin: The PWM output pin to control
         the motor's speed.
     :param int ramp_time: The time (in milliseconds) that is used to smooth the motor's input.
         Default is 500. This time represents the maximum amount of time that the input will be
