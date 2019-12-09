@@ -4,6 +4,47 @@
 .. If your library file(s) are nested in a directory (e.g. /adafruit_foo/foo.py)
 .. use this format as the module name: "adafruit_foo.foo"
 
+Motor Types
+===================
+
+Motor Pool Object
+-------------------
+
+.. autoclass:: drivetrain.motor.MotorPool
+    :members:
+
+Smoothing Algorithm
+-------------------
+
+.. autoclass:: drivetrain.helpers.smoothing_input.SmoothMotor
+    :members:
+
+Solenoid
+----------------
+
+.. autoclass:: drivetrain.motor.Solenoid
+    :members: value
+
+BiMotor
+----------------
+
+.. autoclass:: drivetrain.motor.BiMotor
+    :members:
+    :show-inheritance:
+
+PhasedMotor
+----------------
+
+.. autoclass:: drivetrain.motor.PhasedMotor
+    :members:
+    :show-inheritance:
+
+StepperMotor
+----------------
+
+.. autoclass:: drivetrain.stepper.StepperMotor
+    :members:
+
 Drivetrain Configurations
 ============================
 
@@ -81,50 +122,8 @@ USB
     :members:
     :show-inheritance:
 
-
-Motor Types
-===================
-
-Smoothing Algorithm
--------------------
-
-.. autoclass:: drivetrain.helpers.smoothing_input.SmoothMotor
-    :members:
-
-Motor Pool Object
--------------------
-
-.. autoclass:: drivetrain.motor.MotorPool
-    :members:
-
-Solenoid
-----------------
-
-.. autoclass:: drivetrain.motor.Solenoid
-    :members: value
-
-BiMotor
-----------------
-
-.. autoclass:: drivetrain.motor.BiMotor
-    :members:
-    :show-inheritance:
-
-PhasedMotor
-----------------
-
-.. autoclass:: drivetrain.motor.PhasedMotor
-    :members:
-    :show-inheritance:
-
-StepperMotor
-----------------
-
-.. autoclass:: drivetrain.stepper.StepperMotor
-    :members:
-
-Roboclaw Bus object helper class
-----------------------------------
+Roboclaw motor controller
+---------------------------------------
 
 .. automodule:: drivetrain.roboclaw_bus
     :members:

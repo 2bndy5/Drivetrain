@@ -42,12 +42,13 @@ except ImportError:
 
 class Tank(SmoothDrivetrain):
     """A Drivetrain class meant to be used for motor configurations where propulsion and steering
-    are shared tasks (also known as a "Differential" Drivetrain). For example: The military's tank vehicle essentially has 2 motors (1 on each side) where propulsion is done by both motors, and steering is controlled by varying the different motors' input commands.
+    are shared tasks (also known as a "Differential" Drivetrain). For example: The military's tank
+    vehicle essentially has 2 motors (1 on each side) where propulsion is done by both motors, and
+    steering is controlled by varying the different motors' input commands.
 
-    :param list motors: A `list` of motors that are to be controlled in concert. Each item in this
-        `list` represents a single motor object and must be of type `Solenoid`, `BiMotor`,
-        `PhasedMotor`, or `StepperMotor`. The first 2 motors in this `list` are used to propell and
-        steer respectively.
+    :param MotorPool motors: An object -- inherent of a `list` -- of motors that are to be
+        controlled in concert. See `MotorPool` for more details. The first 2 motors in this
+        object's list are used to propell and steer cooperatively.
 
     :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
@@ -124,11 +125,9 @@ class Automotive(SmoothDrivetrain):
     are separate tasks. The first motor is used to steer, and the second motor is used to
     propell. An example of this would be any remote control toy vehicle.
 
-    :param list motors: A `list` of motors that are to be controlled in concert. Each item in this
-        `list` represents a single motor object and must be of type `Solenoid` (steering only), `BiMotor`,
-        `PhasedMotor`, or `StepperMotor`. The 2 motors in this `list` are used to steer and propell
-        respectively.
-
+    :param MotorPool motors: An object -- inherent of a `list` -- of motors that are to be
+        controlled in concert. See `MotorPool` for more details. The first 2 motors in this
+        object's list are used to propell and steer respectively.
     :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
         it just limits the top speed that the forward/backward motion can go.
@@ -276,14 +275,14 @@ class Mecanum(SmoothDrivetrain):
     and steering are shared tasks (like having 2 Tank Drivetrains). Each motor drives a single
     mecanum wheel which allows for the ability to strafe.
 
-    :param list motors: A `list` of motors that are to be controlled in concert. Each item in this
-        `list` represents a single motor object and must be of type `BiMotor`,
-        `PhasedMotor`, or `StepperMotor`. The motors `list` should be ordered as follows:
+    :param MotorPool motors: An object -- inherent of a `list` -- of motors that are to be
+        controlled in concert. See `MotorPool` for more details. The motors in this object's
+        list should be ordered (clockwise) as follows:
 
-            * Front-Right
-            * Rear-Right
-            * Rear-Left
-            * Front-Left
+            0. Front-Right
+            1. Rear-Right
+            2. Rear-Left
+            3. Front-Left
 
     :param int max_speed: The maximum speed as a percentage in range [0, 100] for the drivetrain's
         forward and backward motion. Defaults to 100%. This does not scale the motor speed's range,
