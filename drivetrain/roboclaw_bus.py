@@ -3,7 +3,7 @@
 # pylint: disable=too-many-function-args
 from .helpers.smoothing_input import SmoothMotor
 
-class RoboclawMotor(SmoothMotor):
+class RoboclawChannels(SmoothMotor):
     """A class to use one motor's set of terminals on a Roboclaw device.
 
     :param ~roboclaw.roboclaw.Roboclaw rc_bus: the main UART serial bus to be used as a default
@@ -34,7 +34,7 @@ class RoboclawMotor(SmoothMotor):
         self._value = value
         self.address = address
         self._channel = channel
-        super(RoboclawMotor, self).__init__(ramp_time=ramp_time)
+        super(RoboclawChannels, self).__init__(ramp_time=ramp_time)
 
     @property
     def value(self):
