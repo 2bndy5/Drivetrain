@@ -123,7 +123,7 @@ class SmoothMotor:
         self._cancel_thread = True
         if self._smoothing_thread is not None:
             self._stop_thread()
-        del self._smoothing_thread,  self._value, self._init_speed, self._target_speed, self._init_smooth, self._end_smooth, self._dt, self._smoothing_thread, self._cancel_thread
+        del self._smoothing_thread,  self._value, self._init_speed, self._target_speed, self._init_smooth, self._end_smooth, self._dt, self._cancel_thread
         # super().__del__()
 
 class SmoothDrivetrain:
@@ -177,10 +177,7 @@ class SmoothDrivetrain:
                 become dislodged on sudden and drastic changes in speed.
         """
         self._prev_cmds = cmds
-        # pylint disable=no-member
         self._motor_pool.go(cmds, smooth=(smooth if smooth is not None else self._smooth))
-        # pylint enable=no-member
-        self.sync()
 
     @property
     def value(self):

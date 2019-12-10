@@ -2,6 +2,7 @@
 `BiMotor` object compatible with `MotorPool` API"""
 # pylint: disable=too-many-function-args
 from .smoothing_input import SmoothMotor
+from .motors import MotorPool
 
 class RoboclawChannels(SmoothMotor):
     """A class to use one motor's set of terminals on a Roboclaw device.
@@ -29,7 +30,7 @@ class RoboclawChannels(SmoothMotor):
             versa. If the motor is going from rest to either full reverse or full forward, then
             the time it takes to do that will be half of this attribute's value.
     """
-    def __init__(self, rc_bus, address, channel, value=0, ramp_time=2000):
+    def __init__(self, rc_bus, address, channel, value=0, ramp_time=0):
         self._rc_bus = rc_bus
         self._value = value
         self.address = address
@@ -47,7 +48,48 @@ class RoboclawChannels(SmoothMotor):
     @value.setter
     def value(self, val):
         self._value = min(65535, max(-65535, int(val)))
-        if self._channel:
-            self._rc_bus.duty_m1(int(self._value / 2))
-        else:
-            self._rc_bus.duty_m2(int(self._value / 2))
+        if self._channel is not None:
+            if self._channel:
+                self._rc_bus.duty_m1(int(self._value / 2))
+            else:
+                self._rc_bus.duty_m2(int(self._value / 2))
+
+class RoboclawMotorPool(MotorPool):
+    """A wrapper to `MotorPool` to intervept 2 motor commands and write them
+    simultaneously instead of writing each command individually."""
+    def __init__(self, rc_bus, address=None, ramp_time=0):
+        super(RoboclawMotorPool, self).__init__()
+        for addr in address:
+            self._motors.append(RoboclawChannels(None, addr, None, ramp_time=ramp_time))
+        self._rc_bus = rc_bus
+
+    def go(self, cmds, smooth=None):
+        """This function takes the input commands and passes them to the motors.
+
+        :param list,tuple cmds: A `list` or `tuple` of values to be passed to the motors.
+        :param bool smooth: This controls the motors' built-in algorithm that smooths input values
+            over a period of time (in milliseconds) contained in the motors'
+            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time` attribute. This can be
+            disabled per motor by setting the
+            :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time` attribute to ``0``, thus
+            the smoothing algorithm is automatically bypassed despite this parameter's value.
+        """
+        for i, cmd in enumerate(cmds):
+            if i < len(self._motors):
+                if smooth: # if input is getting smoothed
+                    self._motors[i].cellerate(cmd)
+                else:
+                    self._motors[i].value = cmd
+            if i % 2:
+                self._rc_bus.duty_m1_m2(
+                    int(cmds[i - 1] / 2),
+                    int(cmd / 2),
+                    address=self._motors[i].address)
+
+    def sync(self):
+        super().sync()
+        for i in range(0, self._motors, 2):
+            self._rc_bus.duty_m1_m2(
+                int(self._motors[i].value / 2),
+                int(self._motors[1 + i].value / 2),
+                address=self._motors[i].address)

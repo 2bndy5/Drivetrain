@@ -56,7 +56,7 @@ class Tank(SmoothDrivetrain):
     """
 
     def __init__(self, motors, max_speed=100):
-        if len(motors) != 2:
+        if len(motors) < 2:
             raise ValueError('The drivetrain requires 2 motors to operate.')
         for i, m in enumerate(motors):
             if not isinstance(m, SmoothMotor):

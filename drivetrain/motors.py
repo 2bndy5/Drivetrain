@@ -62,22 +62,22 @@ class MotorPool:
             :attr:`~drivetrain.smoothing_input.SmoothMotor.ramp_time` attribute to ``0``, thus
             the smoothing algorithm is automatically bypassed despite this parameter's value.
         """
-        # for i, cmd in enumerate(cmds):
-        #     if i < len(self._motors):
-        #         if smooth: # if input is getting smoothed
-        #             self._motors[i].cellerate(cmd)
-        #         else:
-        #             self._motors[i].value = cmd
-
-        i = 0
-        while i < len(self._motors):
-            skip = len(self._motors[i])
-            for j in range(skip):
-                if smooth:
-                    self._motors[i + j].cellerate(cmds[i + j])
+        for i, cmd in enumerate(cmds):
+            if i < len(self._motors):
+                if smooth: # if input is getting smoothed
+                    self._motors[i].cellerate(cmd)
                 else:
-                    self._motors[i + j].value = cmds[i + j]
-            i += skip
+                    self._motors[i].value = cmd
+
+        # i = 0
+        # while i < len(self._motors):
+        #     skip = len(self._motors[i])
+        #     for j in range(skip):
+        #         if smooth:
+        #             self._motors[i + j].cellerate(cmds[i + j])
+        #         else:
+        #             self._motors[i + j].value = cmds[i + j]
+        #     i += skip
 
     @property
     def is_cellerating(self):
