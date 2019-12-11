@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 """
-
 Drivetrain Configuration Classes
 ================================
 
@@ -47,7 +46,6 @@ except ImportError:
 
 class Drivetrain:
     """A base class that is only used for inheriting various types of drivetrain configurations."""
-
     def __init__(self, motors, max_speed=100, smooth=True):
         #  prototype motors lust to avoid error in __del__ on exceptions
         self._motors = []
