@@ -76,12 +76,12 @@ class SmoothMotor:
         # print('target speed: {}, init speed: {}'.format(self._target_speed, self._init_speed))
         # print('time_i: {}'.format(time_i))
         # print('end smoothing: {}, init smooth: {}'.format(self._end_smooth, self._init_smooth))
-        if time_i < self._end_smooth and self.value != self._target_speed:
+        if self.value != self._target_speed and time_i < self._end_smooth and self.ramp_time:
             delta_speed = (1 - cos((time_i - self._init_smooth) / float(self._end_smooth \
                 - self._init_smooth) * PI)) / 2
             self.value = int(delta_speed * (self._target_speed - self._init_speed) + \
                  self._init_speed)
-            # print('delta speed: {}'.format(delta_speed))
+            # print('delta speed: {delta_speed}')
         else:
             # print('done changing speed')
             self.value = self._target_speed
@@ -199,9 +199,6 @@ class SmoothDrivetrain:
     @max_speed.setter
     def max_speed(self, val):
         self._max_speed = max(0, min(val if val is not None else 0, 100))
-
-    def __len__(self):
-        return 1
 
     def __del__(self):
         del self._motor_pool, self._max_speed, self._prev_cmds, self._smooth

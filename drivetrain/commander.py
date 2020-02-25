@@ -197,7 +197,6 @@ class Locomotive(SmoothDrivetrain):
         applied can vary) because they are basically motors simulating linear motion via a gear box
         controlling a shaft's extension/retraction. This may change when we support servos though.
     """
-
     def __init__(self, solenoids, switch_pin=None):
         if isinstance(solenoids, Solenoid):
             raise ValueError('this drivetrain only uses a 1 Solenoid object')
@@ -239,8 +238,8 @@ class Locomotive(SmoothDrivetrain):
             armature on the same wheel(s) or axel(s).
         """
         self._is_forward = forward
-        self._is_in_motion = True
         self.stop()
+        self._is_in_motion = True
         if IS_THREADED:
             self._moving_thread = Thread(target=self._move)
             self._moving_thread.start()
