@@ -4,11 +4,7 @@ nRF24L01 transceiver to control a Mecanum drivetrain.
 """
 import board
 from digitalio import DigitalInOut
-from pulseio import PWMOut
-# except ImportError: # running on Raspberry Pi, nVidia Jetson, or a MicroPython board
-#   from machine import Pin
-#   from drivetrain.helpers import PWMOut, DigitalInOut
-from circuitpython_nrf24l01 import RF24
+from circuitpython_nrf24l01.rf24 import RF24
 from drivetrain import Mecanum, BiMotor, NRF24L01rx
 
 # instantiate transceiver radio on the SPI bus
@@ -32,7 +28,7 @@ motors = [
     ]
 
 # instantiate receiving object for a Mecanum drivetrain
-d = NRF24L01rx(nrf, Mecanum(motors))
+d = NRF24L01rx(nrf, Mecanum(motors), address=b"1Node")
 
 while True: # this runs forever
     d.sync()

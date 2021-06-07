@@ -1,15 +1,17 @@
 """
 A colection of controlling interfaces for drivetrains (both external and internal).
-
 """
 PYSERIAL = True
 try:
     from serial import Serial as UART
 except ImportError:
     PYSERIAL = False # not running on Win32 nor Linux
-    from .usart_serial_ctx import SerialUART as UART
-from circuitpython_nrf24l01 import RF24
+    try:
+        from busio import UART
+    except ImportError: # running on a MicroPython board
+        from .usart_serial_ctx import SerialUART as UART
 from .buffer_mixin import BufferMixin
+from circuitpython_nrf24l01.rf24 import RF24
 
 IS_TREADED = PYSERIAL
 
@@ -26,9 +28,9 @@ class NRF24L01(BufferMixin):
         please read the documentation on the using the
         :py:meth:`~circuitpython_nrf24l01.rf24.RF24.open_tx_pipe()`
     """
-    def __init__(self, nrf24_object, address=b'rfpi0', cmd_template="ll"):
+    def __init__(self, nrf24_object, address=b"rfpi0", cmd_template="ll"):
         if not isinstance(nrf24_object, RF24):
-            raise ValueError('nRf24L01 object not recognized or supported.')
+            raise ValueError("nRF24L01 object not recognized or supported.")
         self._rf = nrf24_object
         self._rf.listen = False
         # self._rf.what_happened(1) # prints radio condition
@@ -98,9 +100,15 @@ class NRF24L01rx(NRF24L01):
         """Checks if there are new commands waiting in the nRF24L01's RX FIFO buffer to be
         processed by the drivetrain object (passed to the constructor upon instantiation).
         Any data that is waiting to be received is interpreted and passed to the drivetrain object."""
-        if self._rf.any():
-            rx = self._rf.recv()
-            self.go(self._message_unpack(rx))
+        if self._rf.available():
+            rx = self._rf.read()
+            fmt = b''
+            for i, byte in enumerate(rx):
+                if byte == 59: # found ';' now convert all prior chars to str & break
+                    # str() doesn't supprot "encoding" kwarg in circuitpython
+                    fmt = ''.join(chr(c) for c in rx[:i])
+                    break
+            self.go(list(struct.unpack(fmt, rx[len(fmt) + 1:])))
         if not IS_TREADED:
             self._d_train.sync()
 
