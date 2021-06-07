@@ -4,6 +4,10 @@ nRF24L01 transceiver to control a Mecanum drivetrain.
 """
 import board
 from digitalio import DigitalInOut
+from pulseio import PWMOut
+# except ImportError: # running on Raspberry Pi, nVidia Jetson, or a MicroPython board
+#   from machine import Pin
+#   from drivetrain.helpers import PWMOut, DigitalInOut
 from circuitpython_nrf24l01.rf24 import RF24
 from drivetrain import Mecanum, BiMotor, NRF24L01rx
 
