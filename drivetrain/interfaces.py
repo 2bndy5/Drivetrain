@@ -1,6 +1,5 @@
 """
 A colection of controlling interfaces for drivetrains (both external and internal).
-
 """
 import struct
 PYSERIAL = True
@@ -12,7 +11,7 @@ except ImportError:
         from busio import UART
     except ImportError: # running on a MicroPython board
         from .usart_serial_ctx import SerialUART as UART
-from circuitpython_nrf24l01 import RF24
+from circuitpython_nrf24l01.rf24 import RF24
 
 IS_TREADED = PYSERIAL
 
@@ -35,9 +34,9 @@ class NRF24L01():
         correspond to the number of commands in the ``cmds`` list passed to
         :py:meth:`~drivetrain.interfaces.NRF24L01rx.go()`.
     """
-    def __init__(self, nrf24_object, address=b'rfpi0', cmd_template="ll"):
+    def __init__(self, nrf24_object, address=b"rfpi0", cmd_template="ll"):
         if not isinstance(nrf24_object, RF24):
-            raise ValueError('nRf24L01 object not recognized or supported.')
+            raise ValueError("nRF24L01 object not recognized or supported.")
         self._rf = nrf24_object
         self._address = address
         self.address = address
@@ -91,7 +90,7 @@ class NRF24L01tx(NRF24L01):
             characters in the :py:attr:`~drivetrain.interfaces.NRF24L01.cmd_template` string.
         """
         self._prev_cmds = cmds
-        command = self._fmt.encode() + b';'
+        command = self._fmt.encode() + b";"
         for i, c in enumerate(self._fmt):
             try:
                 command += struct.pack(c, cmds[i])
@@ -124,8 +123,8 @@ class NRF24L01rx(NRF24L01):
         """Checks if there are new commands waiting in the nRF24L01's RX FIFO buffer to be
         processed by the drivetrain object (passed to the constructor upon instantiation).
         Any data that is waiting to be received is interpreted and passed to the drivetrain object."""
-        if self._rf.any():
-            rx = self._rf.recv()
+        if self._rf.available():
+            rx = self._rf.read()
             fmt = b''
             for i, byte in enumerate(rx):
                 if byte == 59: # found ';' now convert all prior chars to str & break

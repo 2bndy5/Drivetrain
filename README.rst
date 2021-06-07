@@ -33,7 +33,7 @@ Some cases may require the last command be prefixed with ``sudo`` or appended wi
 
 Installing this library should also automatically install the dependencies listed above (platform permitting).
 
-Examples
-===========
+Try the Examples
+================
 
 Try out any of the simple test examples in the `examples <https://drivetrain.readthedocs.io/en/latest/examples.html>`_ to make sure everything (including pin connections & library installation) is setup correctly.
